@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "eu.asangarin.endereyesgui.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "mixins.endereyesgui.refmap.json",
+  "mixins": [
+  ],
+  "client": [
+    "EEGInventoryScreenMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
