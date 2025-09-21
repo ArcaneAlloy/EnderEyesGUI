@@ -7,9 +7,9 @@ import java.util.Locale;
 
 public enum EnderEye {
 	ABYSS(-10, -5), BLACK(-6, -5), COLD(-2, -5), CORRUPTED(2, -5), CURSED(6, -5), EVIL(10, -5),
-	EXOTIC(-10, -2), FLAME(-6, -2), GUARDIAN(-2, -2), LOST(2, -2), LUCKY(6, -2), MAGICAL(10, -2),
-	MECH(-10, 1), MONSTROUS(-6, 1), MOSSY(-2, 1), NETHER(2, 1), DESERT(6, 1), PARASITE(10, 1),
-	ROGUE(-10, 4), SCULK(-6, 4), SOUL(-2, 4), UNDEAD(2, 4), VOID(6, 4), WITCH(10, 4);
+	EXOTIC(-10, -2), FLAME(-6, -2), GUARDIAN(-2, -2), LOST(2, -2), AURORA(6, -2), MAGICAL(10, -2),
+	MECH(-10, 1), MONSTROUS(-6, 1), CARMINITE(-2, 1), NETHER(2, 1), DESERT(6, 1), PARASITE(10, 1),
+	ROGUE(-10, 4), SCULK(-6, 4), FIERY(-2, 4), UNDEAD(2, 4), VOID(6, 4), WITCH(10, 4);
 
 	private static final EnderEye[] VALUES = values();
 
