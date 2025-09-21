@@ -1,97 +1,109 @@
 {
   "endereyes.abyss.name": "Abyss Eye",
-  "endereyes.abyss.description.1": "Abyss Eye Description 1",
-  "endereyes.abyss.description.2": "Abyss Eye Description 2",
+  "endereyes.abyss.description.1": "Beneath the oceans of the Overworld you can find the Sunken City.",
+  "endereyes.abyss.description.2": "There you will find the Leviathan... waiting for you.",
 
   "endereyes.black.name": "Black Eye",
-  "endereyes.black.description.1": "Black Eye Description 1",
-  "endereyes.black.description.2": "Black Eye Description 2",
+  "endereyes.black.description.1": "Search old sunken ships and buried chests in the vast seas of Overworld.",
+  "endereyes.black.description.2": "Some pirates may have it stored inside a treasure on their ships.",
 
   "endereyes.cold.name": "Cold Eye",
-  "endereyes.cold.description.1": "Cold Eye Description 1",
-  "endereyes.cold.description.2": "Cold Eye Description 2",
+  "endereyes.cold.description.1": "In the snow of the Overworld during the night is where the Iceologer roam.",
+  "endereyes.cold.description.2": "Better bring hot chocolate.",
 
   "endereyes.corrupted.name": "Corrupted Eye",
-  "endereyes.corrupted.description.1": "Corrupted Eye Description 1",
-  "endereyes.corrupted.description.2": "Corrupted Eye Description 2",
+  "endereyes.corrupted.description.1": "Like a plague at their Outposts across the Overworld,",
+  "endereyes.corrupted.description.2": "pillagers guard what you long to find.",
 
   "endereyes.cursed.name": "Cursed Eye",
-  "endereyes.cursed.description.1": "Cursed Eye Description 1",
-  "endereyes.cursed.description.2": "Cursed Eye Description 2",
+  "endereyes.cursed.description.1": "Explore the bastions down below the Nether to their very core.",
+  "endereyes.cursed.description.2": "Be careful, the pigs bite.",
 
   "endereyes.evil.name": "Evil Eye",
-  "endereyes.evil.description.1": "Evil Eye Description 1",
-  "endereyes.evil.description.2": "Evil Eye Description 2",
+  "endereyes.evil.description.1": "Defend a village from an Illager Raid",
+  "endereyes.evil.description.2": "and the Cleric will decide if you are worthy of the reward.",
 
   "endereyes.exotic.name": "Exotic Eye",
-  "endereyes.exotic.description.1": "Exotic Eye Description 1",
-  "endereyes.exotic.description.2": "Exotic Eye Description 2",
+  "endereyes.exotic.description.1": "Infuse an Ender Eye with a Bubble, Fire, Horn and Tube coral each,",
+  "endereyes.exotic.description.2": "two Conduit and two Glow Ink Sac.",
 
   "endereyes.flame.name": "Flame Eye",
-  "endereyes.flame.description.1": "Flame Eye Description 1",
-  "endereyes.flame.description.2": "Flame Eye Description 2",
+  "endereyes.flame.description.1": "Summon me in the Burning Arena deep in the Nether.",
+  "endereyes.flame.description.2": "Prove to me that you are worthy or perish in the flames.",
 
   "endereyes.guardian.name": "Guardian Eye",
-  "endereyes.guardian.description.1": "Guardian Eye Description 1",
-  "endereyes.guardian.description.2": "Guardian Eye Description 2",
+  "endereyes.guardian.description.1": "Rulers in their Temples beneath the Ocean,",
+  "endereyes.guardian.description.2": "the Elder Guardian waits patiently for their untimely victims.",
 
   "endereyes.lost.name": "Lost Eye",
-  "endereyes.lost.description.1": "Lost Eye Description 1",
-  "endereyes.lost.description.2": "Lost Eye Description 2",
+  "endereyes.lost.description.1": "Find it deeper in the Overworld, exploring Mineshafts",
+  "endereyes.lost.description.2": "and searching through its abandoned chests.",
 
   "endereyes.lucky.name": "Lucky Eye",
-  "endereyes.lucky.description.1": "Lucky Eye Description 1",
-  "endereyes.lucky.description.2": "Lucky Eye Description 2",
+  "endereyes.lucky.description.1": "Inside the Colosseum, somewhere in the Overworld,",
+  "endereyes.lucky.description.2": "you must face Dame Fortune. Good luck.",
 
   "endereyes.magical.name": "Magical Eye",
-  "endereyes.magical.description.1": "Magical Eye Description 1",
-  "endereyes.magical.description.2": "Magical Eye Description 2",
+  "endereyes.magical.description.1": "During the fervor of a Raid or in the Mansions you can find the Evoker",
+  "endereyes.magical.description.2": "waiting for you to seal its fate.",
 
-  "endereyes.mech.name": "Mechanical Eye",
-  "endereyes.mech.description.1": "Mechanical Eye Description 1",
-  "endereyes.mech.description.2": "Mechanical Eye Description 2",
+  "endereyes.mech.name": "Mech Eye",
+  "endereyes.mech.description.1": "Inside the caves of the Overworld, an Ancient Factory shelters a",
+  "endereyes.mech.description.2": "mechanical monster: the Harbinger.",
 
   "endereyes.monstrous.name": "Monstrous Eye",
-  "endereyes.monstrous.description.1": "Monstrous Eye Description 1",
-  "endereyes.monstrous.description.2": "Monstrous Eye Description 2",
+  "endereyes.monstrous.description.1": "In the hottest part of the Nether you will find the",
+  "endereyes.monstrous.description.2": "Netherite Monstrosity, in the mythical Black Soul Smith.",
 
   "endereyes.mossy.name": "Mossy Eye",
-  "endereyes.mossy.description.1": "Mossy Eye Description 1",
-  "endereyes.mossy.description.2": "Mossy Eye Description 2",
+  "endereyes.mossy.description.1": "Inside the Colosseum, somewhere in the Overworld,",
+  "endereyes.mossy.description.2": "you must face the Swampjaw. Smells fishy.",
 
   "endereyes.nether.name": "Nether Eye",
-  "endereyes.nether.description.1": "Nether Eye Description 1",
-  "endereyes.nether.description.2": "Nether Eye Description 2",
+  "endereyes.nether.description.1": "Venture to a Fortress in the Nether and find it among its treasures.",
+  "endereyes.nether.description.2": "",
 
   "endereyes.desert.name": "Desert Eye",
-  "endereyes.desert.description.1": "Desert Eye Description 1",
-  "endereyes.desert.description.2": "Desert Eye Description 2",
+  "endereyes.desert.description.1": "A Cursed Pyramid rises in the deserts of the Overworld.",
+  "endereyes.desert.description.2": "There, the Ancient Remnant awaits defiantly.",
 
   "endereyes.parasite.name": "Parasite Eye",
-  "endereyes.parasite.description.1": "Parasite Eye Description 1",
-  "endereyes.parasite.description.2": "Parasite Eye Description 2",
+  "endereyes.parasite.description.1": "Disturb the depths of the End and annihilate its parasite,",
+  "endereyes.parasite.description.2": "the Void Worm.",
 
   "endereyes.rogue.name": "Rogue Eye",
-  "endereyes.rogue.description.1": "Rogue Eye Description 1",
-  "endereyes.rogue.description.2": "Rogue Eye Description 2",
+  "endereyes.rogue.description.1": "A simple task! Solve the puzzle of the Jungle Temple in the Overworld and",
+  "endereyes.rogue.description.2": "find its treasure there.",
 
   "endereyes.sculk.name": "Sculk Eye",
-  "endereyes.sculk.description.1": "Sculk Eye Description 1",
-  "endereyes.sculk.description.2": "Sculk Eye Description 2",
+  "endereyes.sculk.description.1": "Below the Overworld, into the Deep Dark, the Warden sleep until hearing",
+  "endereyes.sculk.description.2": "your echoes.",
 
   "endereyes.soul.name": "Soul Eye",
-  "endereyes.soul.description.1": "Soul Eye Description 1",
-  "endereyes.soul.description.2": "Soul Eye Description 2",
+  "endereyes.soul.description.1": "Inside the Colosseum, somewhere in the Overworld,",
+  "endereyes.soul.description.2": "you must face the Bellringer. Recognize the chimes?",
 
   "endereyes.undead.name": "Undead Eye",
-  "endereyes.undead.description.1": "Undead Eye Description 1",
-  "endereyes.undead.description.2": "Undead Eye Description 2",
+  "endereyes.undead.description.1": "On the snowy plains you will find the prison that holds Maledictus.",
+  "endereyes.undead.description.2": "Free him.",
 
   "endereyes.void.name": "Void Eye",
-  "endereyes.void.description.1": "Void Eye Description 1",
-  "endereyes.void.description.2": "Void Eye Description 2",
+  "endereyes.void.description.1": "Travel far into the End until you find a Ruined Citadel.",
+  "endereyes.void.description.2": "In its depths dwells the Ender Guardian.",
 
   "endereyes.witch.name": "Witch Eye",
-  "endereyes.witch.description.1": "Witch Eye Description 1",
-  "endereyes.witch.description.2": "Witch Eye Description 2"
+  "endereyes.witch.description.1": "Fight a witch and tear out her pupil. Then combine it with an Ender Pearl.",
+  "endereyes.witch.description.2": "Disgusting but necessary.",
+
+  "endereyes.fiery.name": "Fiery Eye",
+  "endereyes.fiery.description.1": "Venture into the Fire Swamp inside of the Twilight Forest",
+  "endereyes.fiery.description.2": "where you will find the lair of the fearsome Hydra.",
+
+  "endereyes.carminite.name": "Carminite Eye",
+  "endereyes.carminite.description.1": "Rising ominously above the Dark Forest inside of the Twilight Forest",
+  "endereyes.carminite.description.2": "is a Dark Tower. Find your way up to face Ur-Ghast.",
+
+  "endereyes.aurora.name": "Aurora Eye",
+  "endereyes.aurora.description.1": "In the desolate glaciers inside of the Twilight Forest,",
+  "endereyes.aurora.description.2": "look for the Aurora Palace where the Snow Queen reigns."
 }
