@@ -8,6 +8,8 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
@@ -28,8 +30,11 @@ public class EnderEyesScreen extends Screen {
 
 		for(EnderEye eye : EnderEye.getValues()) {
 			boolean unlocked = eyeSet.contains(eye);
-			List<Component> tooltip = Collections.singletonList(Component.translatable(eye.getTranslationKey())
-				.withStyle(unlocked ? ChatFormatting.LIGHT_PURPLE : ChatFormatting.DARK_PURPLE));
+			List<Component> tooltip = new ArrayList<>();
+			tooltip.add(Component.translatable(eye.getTranslationKey()).withStyle(unlocked ? ChatFormatting.LIGHT_PURPLE : ChatFormatting.DARK_PURPLE));
+			tooltip.add(Component.translatable(eye.getDifficult().getTranslate()).withStyle(eye.getDifficult().getColorForChat()));
+
+
 			int x = 13 * eye.getX();
 			if(eye.getX() < 0) x -= 1;
 			int y = 13 * eye.getY();

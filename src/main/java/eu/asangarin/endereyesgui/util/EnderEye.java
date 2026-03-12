@@ -6,23 +6,45 @@ import net.minecraft.resources.ResourceLocation;
 import java.util.Locale;
 
 public enum EnderEye {
-	ABYSS(-10, -5), BLACK(-6, -5), COLD(-2, -5), CORRUPTED(2, -5), CURSED(6, -5), EVIL(10, -5),
-	EXOTIC(-10, -2), FLAME(-6, -2), GUARDIAN(-2, -2), LOST(2, -2), AURORA(6, -2), MAGICAL(10, -2),
-	MECH(-10, 1), MONSTROUS(-6, 1), CARMINITE(-2, 1), NETHER(2, 1), DESERT(6, 1), PARASITE(10, 1),
-	ROGUE(-10, 4), SCULK(-6, 4), FIERY(-2, 4), UNDEAD(2, 4), VOID(6, 4), WITCH(10, 4);
+	ABYSS(-10, -5,EnderEyeDifficult.EASY),
+	BLACK(-6, -5,EnderEyeDifficult.EASY),
+	COLD(-2, -5,EnderEyeDifficult.EASY),
+	CORRUPTED(2, -5,EnderEyeDifficult.EASY),
+	CURSED(6, -5,EnderEyeDifficult.EASY),
+	EVIL(10, -5,EnderEyeDifficult.EASY),
+	EXOTIC(-10, -2,EnderEyeDifficult.EASY),
+	FLAME(-6, -2,EnderEyeDifficult.EASY),
+	GUARDIAN(-2, -2,EnderEyeDifficult.EASY),
+	LOST(2, -2,EnderEyeDifficult.EASY),
+	AURORA(6, -2,EnderEyeDifficult.EASY),
+	MAGICAL(10, -2,EnderEyeDifficult.EASY),
+	MECH(-10, 1,EnderEyeDifficult.EASY),
+	MONSTROUS(-6, 1,EnderEyeDifficult.EASY),
+	CARMINITE(-2, 1,EnderEyeDifficult.EASY),
+	NETHER(2, 1,EnderEyeDifficult.EASY),
+	DESERT(6, 1,EnderEyeDifficult.EASY),
+	PARASITE(10, 1,EnderEyeDifficult.EASY),
+	ROGUE(-10, 4,EnderEyeDifficult.EASY),
+	SCULK(-6, 4,EnderEyeDifficult.EASY),
+	FIERY(-2, 4,EnderEyeDifficult.EASY),
+	UNDEAD(2, 4,EnderEyeDifficult.EASY),
+	VOID(6, 4,EnderEyeDifficult.EASY),
+	WITCH(10, 4,EnderEyeDifficult.EASY);
 
 	private static final EnderEye[] VALUES = values();
 
 	private final int x, y;
 	private final ResourceLocation advancement, activeIcon, inactiveIcon;
 
-	EnderEye(int x, int y) {
+	private final EnderEyeDifficult difficult;
+	EnderEye(int x, int y,EnderEyeDifficult difficult) {
 		String path = id() + "_eye";
 		this.advancement = new ResourceLocation("endrem", "main/" + path);
 		this.activeIcon = new ResourceLocation(EnderEyesGUI.MODID, "textures/gui/ender_eyes/" + path + ".png");
 		this.inactiveIcon = new ResourceLocation(EnderEyesGUI.MODID, "textures/gui/ender_eyes/" + path + "_off.png");
 		this.x = x;
 		this.y = y;
+		this.difficult = difficult;
 	}
 
 	public ResourceLocation getAdvancementLocation() {
@@ -31,6 +53,10 @@ public enum EnderEye {
 
 	public ResourceLocation getIconTexture(boolean active) {
 		return active ? activeIcon : inactiveIcon;
+	}
+
+	public EnderEyeDifficult getDifficult() {
+		return difficult;
 	}
 
 	public static EnderEye[] getValues() {

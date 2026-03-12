@@ -93,5 +93,9 @@
 
   "endereyes.aurora.name": "Aurora Eye",
   "endereyes.aurora.description.1": "In the desolate glaciers inside of the Twilight Forest,",
-  "endereyes.aurora.description.2": "look for the Aurora Palace where the Snow Queen reigns."
+  "endereyes.aurora.description.2": "look for the Aurora Palace where the Snow Queen reigns.",
+
+  "endereyes.difficult.easy": "Easy",
+  "endereyes.difficult.normal": "Normal",
+  "endereyes.difficult.hard": "Hard"
 }

@@ -9,6 +9,8 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
+
 public class EnderEyeInspectScreen extends Screen {
 	private final boolean unlocked;
 	private final EnderEye eye;
@@ -35,6 +37,13 @@ public class EnderEyeInspectScreen extends Screen {
 	public void render(@NotNull PoseStack stack, int x, int y, float delta) {
 		this.renderBackground(stack);
 		super.render(stack, x, y, delta);
+		Color color = eye.getDifficult().getColor();
+		int r = color.getRed();
+		int g = color.getGreen();
+		int b = color.getBlue();
+		int hex = (r << 16) | (g << 8) | b;
+		drawCenteredString(stack, this.font, Component.translatable(eye.getDifficult().getTranslate()), scaledWidth, scaledHeight, hex);
+
 		drawCenteredString(stack, this.font, Component.translatable(eye.getDescriptionKey(1)), scaledWidth, scaledHeight + 40, 0xFFFFFF);
 		drawCenteredString(stack, this.font, Component.translatable(eye.getDescriptionKey(2)), scaledWidth, scaledHeight + 52, 0xFFFFFF);
 	}
