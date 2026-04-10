@@ -1,0 +1,103 @@
+{
+  "endereyesgui.inventory_button.tooltip": "Menu de Ojos de Ender",
+  
+  "endereyes.abyss.name": "Ojo del Abismo",
+  "endereyes.abyss.description.1": "Bajo los océanos del Overworld puedes encontrar la Ciudad Sumergida.",
+  "endereyes.abyss.description.2": "Allí encontrarás al Leviatán... esperándote.",
+
+  "endereyes.black.name": "Ojo Negro",
+  "endereyes.black.description.1": "Busca antiguos barcos hundidos y cofres enterrados en los vastos mares del Overworld.",
+  "endereyes.black.description.2": "Algunos piratas pueden guardarlo dentro de un tesoro en sus barcos.",
+
+  "endereyes.cold.name": "Ojo Frío",
+  "endereyes.cold.description.1": "En la nieve del Overworld durante la noche es donde deambulan los Iceologer.",
+  "endereyes.cold.description.2": "Mejor lleva chocolate caliente.",
+
+  "endereyes.corrupted.name": "Ojo Corrupto",
+  "endereyes.corrupted.description.1": "Como una plaga en sus puestos avanzados por el Overworld,",
+  "endereyes.corrupted.description.2": "los Saqueadores custodian lo que tanto buscas.",
+
+  "endereyes.cursed.name": "Ojo Maldito",
+  "endereyes.cursed.description.1": "Explora los Bastiones en lo profundo del Nether hasta su núcleo.",
+  "endereyes.cursed.description.2": "Ten cuidado, los cerdos muerden.",
+
+  "endereyes.evil.name": "Ojo Malvado",
+  "endereyes.evil.description.1": "Defiende una aldea de una Invasión de Illagers",
+  "endereyes.evil.description.2": "y el Clérigo decidirá si eres digno de la recompensa.",
+
+  "endereyes.exotic.name": "Ojo Exótico",
+  "endereyes.exotic.description.1": "Infunde un Ojo de Ender con un coral de burbuja, fuego, cuerno y tubo,",
+  "endereyes.exotic.description.2": "un caparazón de nautilo y un saco de tinta luminosa.",
+
+  "endereyes.flame.name": "Ojo Llameante",
+  "endereyes.flame.description.1": "Invócame en la Arena Ardiente en lo profundo del Nether.",
+  "endereyes.flame.description.2": "Demuestra que eres digno o perece en las llamas.",
+
+  "endereyes.guardian.name": "Ojo Guardián",
+  "endereyes.guardian.description.1": "Gobernantes en sus templos bajo el océano,",
+  "endereyes.guardian.description.2": "el Guardián Anciano espera pacientemente a sus víctimas.",
+
+  "endereyes.lost.name": "Ojo Perdido",
+  "endereyes.lost.description.1": "Encuéntralo en lo profundo del Overworld, explorando Minas Abandonadas",
+  "endereyes.lost.description.2": "y buscando en sus cofres.",
+
+  "endereyes.magical.name": "Ojo Mágico",
+  "endereyes.magical.description.1": "Durante el fervor de una Invasión o en las mansiones puedes encontrar al Evocador",
+  "endereyes.magical.description.2": "esperando a que selles su destino.",
+
+  "endereyes.mech.name": "Ojo Mecánico",
+  "endereyes.mech.description.1": "Dentro de las cuevas del Overworld, una Fábrica Antigua alberga",
+  "endereyes.mech.description.2": "un monstruo mecánico: El Heraldo.",
+
+  "endereyes.monstrous.name": "Ojo Monstruoso",
+  "endereyes.monstrous.description.1": "En la parte más caliente del Nether encontrarás a la",
+  "endereyes.monstrous.description.2": "Monstruosidad de Netherita, en la mítica Forja de Almas Negras.",
+
+  "endereyes.nether.name": "Ojo del Nether",
+  "endereyes.nether.description.1": "Aventúrate a una Fortaleza en el Nether y encuéntralo entre sus tesoros.",
+  "endereyes.nether.description.2": "",
+
+  "endereyes.desert.name": "Ojo del Desierto",
+  "endereyes.desert.description.1": "Una Pirámide Maldita se alza en los desiertos del Overworld.",
+  "endereyes.desert.description.2": "Allí, el Remanente Antiguo espera desafiante.",
+
+  "endereyes.parasite.name": "Ojo Parásito",
+  "endereyes.parasite.description.1": "Perturba las profundidades del End y aniquila a su parásito,",
+  "endereyes.parasite.description.2": "el Gusano del Vacío.",
+
+  "endereyes.rogue.name": "Ojo Astuto",
+  "endereyes.rogue.description.1": "¡Una tarea sencilla! Resuelve el puzle del Templo de la Jungla en el Overworld y",
+  "endereyes.rogue.description.2": "encuentra su tesoro allí.",
+
+  "endereyes.sculk.name": "Ojo de Sculk",
+  "endereyes.sculk.description.1": "Bajo el Overworld, en la Oscuridad Profunda, el Warden duerme hasta oír",
+  "endereyes.sculk.description.2": "tus ecos.",
+
+  "endereyes.undead.name": "Ojo No-Muerto",
+  "endereyes.undead.description.1": "En las llanuras nevadas encontrarás la prisión que contiene a Maledictus.",
+  "endereyes.undead.description.2": "Libéralo.",
+
+  "endereyes.void.name": "Ojo del Vacío",
+  "endereyes.void.description.1": "Viaja lejos en el End hasta encontrar una Ciudadela en Ruinas.",
+  "endereyes.void.description.2": "En sus profundidades habita el Guardián del End.",
+
+  "endereyes.witch.name": "Ojo de Bruja",
+  "endereyes.witch.description.1": "Lucha contra una bruja y arráncale la pupila. Luego combínala con una Perla de Ender.",
+  "endereyes.witch.description.2": "Asqueroso pero necesario.",
+
+  "endereyes.fiery.name": "Ojo Ígneo",
+  "endereyes.fiery.description.1": "Adéntrate en el Pantano de Fuego dentro del Twilight Forest",
+  "endereyes.fiery.description.2": "donde encontrarás la guarida de la temible Hidra.",
+
+  "endereyes.carminite.name": "Ojo Carminita",
+  "endereyes.carminite.description.1": "Elevándose ominosamente sobre el Bosque Oscuro dentro del Twilight Forest",
+  "endereyes.carminite.description.2": "hay una Torre Oscura. Encuentra el camino hacia arriba para enfrentarte al Ur-Ghast.",
+
+  "endereyes.aurora.name": "Ojo Aurora",
+  "endereyes.aurora.description.1": "En los glaciares desolados dentro del Twilight Forest,",
+  "endereyes.aurora.description.2": "busca el Palacio Aurora donde reina la Reina de las Nieves.",
+
+  "endereyes.difficult.easy": "Fácil",
+  "endereyes.difficult.normal": "Normal",
+  "endereyes.difficult.hard": "Difícil"
+}
