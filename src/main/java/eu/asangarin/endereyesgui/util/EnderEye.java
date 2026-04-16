@@ -1,11 +1,12 @@
 package eu.asangarin.endereyesgui.util;
 
 import eu.asangarin.endereyesgui.EnderEyesGUI;
+import eu.asangarin.endereyesgui.api.IBottom;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.Locale;
 
-public enum EnderEye {
+public enum EnderEye implements IBottom {
 	ABYSS(-10, -5,EnderEyeDifficult.HARD),
 	BLACK(-6, -5,EnderEyeDifficult.EASY),
 	COLD(-2, -5,EnderEyeDifficult.EASY),

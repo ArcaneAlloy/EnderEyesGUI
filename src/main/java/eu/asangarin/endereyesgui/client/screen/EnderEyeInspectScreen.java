@@ -2,6 +2,7 @@ package eu.asangarin.endereyesgui.client.screen;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import eu.asangarin.endereyesgui.Networking;
+import eu.asangarin.endereyesgui.api.IBottom;
 import eu.asangarin.endereyesgui.client.screen.widget.EnderEyeIcon;
 import eu.asangarin.endereyesgui.util.EnderEye;
 import net.minecraft.client.gui.components.Button;
@@ -13,11 +14,11 @@ import java.awt.*;
 
 public class EnderEyeInspectScreen extends Screen {
 	private final boolean unlocked;
-	private final EnderEye eye;
+	private final IBottom eye;
 
 	private int scaledWidth, scaledHeight;
 
-	protected EnderEyeInspectScreen(EnderEye eye, boolean unlocked) {
+	protected EnderEyeInspectScreen(IBottom eye, boolean unlocked) {
 		super(Component.empty());
 		this.eye = eye;
 		this.unlocked = unlocked;

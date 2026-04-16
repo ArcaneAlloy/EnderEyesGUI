@@ -3,6 +3,7 @@ package eu.asangarin.endereyesgui.client.screen.widget;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import eu.asangarin.endereyesgui.EnderEyesGUI;
+import eu.asangarin.endereyesgui.api.IBottom;
 import eu.asangarin.endereyesgui.util.EnderEye;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.renderer.GameRenderer;
@@ -16,7 +17,7 @@ public class EnderEyeButton extends Button {
 	private final boolean unlocked;
 	private final ResourceLocation eyeTexture;
 
-	public EnderEyeButton(int x, int y, EnderEye eye, boolean unlocked, OnPress onPress, OnTooltip onTooltip) {
+	public EnderEyeButton(int x, int y, IBottom eye, boolean unlocked, OnPress onPress, OnTooltip onTooltip) {
 		super(x, y, 27, 27, CommonComponents.EMPTY, onPress, onTooltip);
 		this.unlocked = unlocked;
 		this.eyeTexture = eye.getIconTexture(unlocked);
