@@ -97,6 +97,19 @@
   "endereyes.aurora.description.1": "In the desolate glaciers inside of the Twilight Forest,",
   "endereyes.aurora.description.2": "look for the Aurora Palace where the Snow Queen reigns.",
 
+  "endereyes.dim_overworld.name": "The Overworld",
+  "endereyes.dim_overworld.description.1": "The Overworld Portal is already open.",
+  "endereyes.dim_overworld.description.2": "You can access it on the Second Floor of The Forgotten Realm.",
+
+  "endereyes.dim_nether.description.1": "8 different Ender Eyes must be obtained to unlock this portal.",
+  "endereyes.dim_nether.description.2": "You can access it on the Second Floor of The Forgotten Realm.",
+
+  "endereyes.dim_twilight_forest.description.1": "A Diamond is the key to unlock this dimension.",
+  "endereyes.dim_twilight_forest.description.2": "You need to throw it in an small lake placed near of Oriana.",
+
+  "endereyes.dim_beyond_the_end.description.1": "Once you obtain all the Ender Eyes The Abyssal Realm portal will be unlocked.",
+  "endereyes.dim_beyond_the_end.description.2": "Good luck with your Journey, Hero.",
+
   "endereyes.difficult.easy": "Easy",
   "endereyes.difficult.normal": "Normal",
   "endereyes.difficult.hard": "Hard"
