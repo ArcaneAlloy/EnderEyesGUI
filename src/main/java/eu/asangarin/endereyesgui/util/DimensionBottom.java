@@ -55,7 +55,9 @@ public enum DimensionBottom implements IBottom {
 	public String getTranslationKey() {
 		return "endereyes.dim_" + id() + ".name";
 	}
-
+	public String getTranslationRemaining() {
+		return "endereyes.dim"+".remaining";
+	}
 	public String getDescriptionKey(int index) {
 		return "endereyes.dim_" + id() + ".description." + index;
 	}
