@@ -7,11 +7,11 @@ import net.minecraft.resources.ResourceLocation;
 import java.util.Locale;
 
 public enum DimensionBottom implements IBottom {
-	OVERWORLD(-8, -7,0,false,EnderEyeDifficult.HARD),
-	NETHER(-4, -7,8,false,EnderEyeDifficult.EASY),
-	THE_END(0, -7,16,false,EnderEyeDifficult.EASY),
-	TWILIGHT_FOREST(4, -7,0,true,EnderEyeDifficult.EASY),
-	BEYOND_THE_END(8, -7,24,false,EnderEyeDifficult.NORMAL);
+	OVERWORLD(-8, -8,0,false,EnderEyeDifficult.HARD),
+	NETHER(-4, -8,8,false,EnderEyeDifficult.EASY),
+	THE_END(0, -8,16,false,EnderEyeDifficult.EASY),
+	TWILIGHT_FOREST(4, -8,0,true,EnderEyeDifficult.EASY),
+	BEYOND_THE_END(8, -8,24,false,EnderEyeDifficult.NORMAL);
 
 	private static final DimensionBottom[] VALUES = values();
 
@@ -53,11 +53,11 @@ public enum DimensionBottom implements IBottom {
 	}
 
 	public String getTranslationKey() {
-		return "endereyes." + id() + ".name";
+		return "endereyes.dim_" + id() + ".name";
 	}
 
 	public String getDescriptionKey(int index) {
-		return "endereyes." + id() + ".description." + index;
+		return "endereyes.dim_" + id() + ".description." + index;
 	}
 
 	public int getX() {
