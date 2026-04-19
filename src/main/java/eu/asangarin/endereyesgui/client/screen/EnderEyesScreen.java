@@ -36,7 +36,7 @@ public class EnderEyesScreen extends Screen {
 				unlocked = portalPlayer.visitTwilightForest();
 			}
 			List<Component> tooltip = new ArrayList<>();
-			tooltip.add(Component.translatable(eye.getTranslationKey() + " : "+(Math.max(eye.getEyes()-portalPlayer.getEyesEarn(),0))).withStyle(unlocked ? ChatFormatting.LIGHT_PURPLE : ChatFormatting.DARK_PURPLE));
+			tooltip.add(Component.translatable(eye.getTranslationKey()).append(" : "+(Math.max(eye.getEyes()-portalPlayer.getEyesEarn(),0))).withStyle(unlocked ? ChatFormatting.LIGHT_PURPLE : ChatFormatting.DARK_PURPLE));
 			tooltip.add(Component.translatable(eye.getDifficult().getTranslate()).withStyle(eye.getDifficult().getColorForChat()));
 
 
