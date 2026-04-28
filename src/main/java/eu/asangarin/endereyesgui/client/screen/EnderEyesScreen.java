@@ -36,9 +36,23 @@ public class EnderEyesScreen extends Screen {
 				unlocked = portalPlayer.visitTwilightForest();
 			}
 			List<Component> tooltip = new ArrayList<>();
-			tooltip.add(Component.translatable(eye.getTranslationKey()).append(unlocked ? " " :Component.translatable(eye.getTranslationRemaining())+" : "+(Math.max(eye.getEyes()-portalPlayer.getEyesEarn(),0))).withStyle(unlocked ? ChatFormatting.LIGHT_PURPLE : ChatFormatting.DARK_PURPLE));
-			tooltip.add(Component.translatable(eye.getDifficult().getTranslate()).withStyle(eye.getDifficult().getColorForChat()));
-
+			Component nameComponent;
+			if (unlocked) {
+				nameComponent = Component.translatable(eye.getTranslationKey()).withStyle(ChatFormatting.LIGHT_PURPLE);
+			} else if (eye.isNeedAdvanced() || eye.getEyes() == 0) {
+				// Twilight Forest y similares se desbloquean por avanzamiento, no por ojos
+				// Solo mostrar el nombre sin el contador de ojos restantes
+				nameComponent = Component.translatable(eye.getTranslationKey()).withStyle(ChatFormatting.DARK_PURPLE);
+			} else {
+				int eyesNeeded = Math.max(eye.getEyes() - portalPlayer.getEyesEarn(), 0);
+				nameComponent = Component.translatable(eye.getTranslationKey())
+					.append(Component.literal(" "))
+					.append(Component.translatable(eye.getTranslationRemaining()))
+					.append(Component.literal(" : " + eyesNeeded))
+					.withStyle(ChatFormatting.DARK_PURPLE);
+			}
+			tooltip.add(nameComponent);
+			// Sin dificultad para los botones de dimension
 
 			int x = 13 * eye.getX();
 			if(eye.getX() < 0) x -= 1;

@@ -8,9 +8,9 @@ import java.util.Locale;
 
 public enum DimensionBottom implements IBottom {
 	OVERWORLD(-8, -8,0,false,EnderEyeDifficult.HARD),
-	NETHER(-4, -8,8,false,EnderEyeDifficult.EASY),
-	THE_END(0, -8,16,false,EnderEyeDifficult.EASY),
-	TWILIGHT_FOREST(4, -8,0,true,EnderEyeDifficult.EASY),
+	TWILIGHT_FOREST(-4, -8,0,true,EnderEyeDifficult.EASY),
+	NETHER(0, -8,8,false,EnderEyeDifficult.EASY),
+	THE_END(4, -8,16,false,EnderEyeDifficult.EASY),
 	BEYOND_THE_END(8, -8,24,false,EnderEyeDifficult.NORMAL);
 
 	private static final DimensionBottom[] VALUES = values();
