@@ -94,5 +94,14 @@
   "endereyes.dim_the_end.name": "The End",
   "endereyes.dim_twilight_forest.name": "Twilight Forest",
   "endereyes.dim_the_end.description.1": "16 different Ender Eyes must be obtained to unlock this portal.",
-  "endereyes.dim_the_end.description.2": "You can access it on the Second Floor of The Forgotten Realm."
+  "endereyes.dim_the_end.description.2": "You can access it on the Second Floor of The Forgotten Realm.",
+  "endereyesgui.enchantments.button": "Enchantments",
+  "endereyesgui.enchantments.button.tooltip": "View enchantment recipes",
+  "endereyesgui.enchantments.title": "Enchantment Recipes",
+  "endereyesgui.enchantments.detail.hint": "Click an enchantment to see its status.",
+  "endereyesgui.enchantments.detail.unlocked": "RECIPE UNLOCKED",
+  "endereyesgui.enchantments.detail.unlocked_sub": "You can use this recipe at the Warlock.",
+  "endereyesgui.enchantments.detail.locked": "RECIPE LOCKED",
+  "endereyesgui.enchantments.detail.eyes_cost": "Ender Eyes needed: %s",
+  "endereyesgui.enchantments.detail.eyes_obtained": "Ender Eyes obtained: %s"
 }

@@ -1,12 +1,15 @@
 package eu.asangarin.endereyesgui.client.screen;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import eu.asangarin.endereyesgui.Networking;
 import eu.asangarin.endereyesgui.api.IBottom;
 import eu.asangarin.endereyesgui.client.screen.widget.EnderEyeButton;
+import eu.asangarin.endereyesgui.client.screen.widget.EnchantmentBookButton;
 import eu.asangarin.endereyesgui.util.DimensionBottom;
 import eu.asangarin.endereyesgui.util.EnderEye;
 import mc.duzo.ender_journey.capabilities.PortalPlayer;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
@@ -40,8 +43,6 @@ public class EnderEyesScreen extends Screen {
 			if (unlocked) {
 				nameComponent = Component.translatable(eye.getTranslationKey()).withStyle(ChatFormatting.LIGHT_PURPLE);
 			} else if (eye.isNeedAdvanced() || eye.getEyes() == 0) {
-				// Twilight Forest y similares se desbloquean por avanzamiento, no por ojos
-				// Solo mostrar el nombre sin el contador de ojos restantes
 				nameComponent = Component.translatable(eye.getTranslationKey()).withStyle(ChatFormatting.DARK_PURPLE);
 			} else {
 				int eyesNeeded = Math.max(eye.getEyes() - portalPlayer.getEyesEarn(), 0);
@@ -52,28 +53,44 @@ public class EnderEyesScreen extends Screen {
 					.withStyle(ChatFormatting.DARK_PURPLE);
 			}
 			tooltip.add(nameComponent);
-			// Sin dificultad para los botones de dimension
 
 			int x = 13 * eye.getX();
 			if(eye.getX() < 0) x -= 1;
 			int y = 13 * eye.getY();
 			boolean finalUnlocked = unlocked;
-			addRenderableWidget(new EnderEyeButton(scaledWidth + x - 13, scaledHeight + y - 13, eye, unlocked, (button) -> pressEye(eye, finalUnlocked),
+			addRenderableWidget(new EnderEyeButton(scaledWidth + x - 13, scaledHeight + y - 13, eye, unlocked,
+					(button) -> pressEye(eye, finalUnlocked),
 					(button, stack, mouseX, mouseY) -> this.renderComponentTooltip(stack, tooltip, mouseX, mouseY)));
 		}
+
 		for(EnderEye eye : EnderEye.getValues()) {
 			boolean unlocked = eyeSet.contains(eye);
 			List<Component> tooltip = new ArrayList<>();
 			tooltip.add(Component.translatable(eye.getTranslationKey()).withStyle(unlocked ? ChatFormatting.LIGHT_PURPLE : ChatFormatting.DARK_PURPLE));
 			tooltip.add(Component.translatable(eye.getDifficult().getTranslate()).withStyle(eye.getDifficult().getColorForChat()));
 
-
 			int x = 13 * eye.getX();
 			if(eye.getX() < 0) x -= 1;
 			int y = 13 * eye.getY();
-			addRenderableWidget(new EnderEyeButton(scaledWidth + x - 13, scaledHeight + y - 13, eye, unlocked, (button) -> pressEye(eye, unlocked),
-				(button, stack, mouseX, mouseY) -> this.renderComponentTooltip(stack, tooltip, mouseX, mouseY)));
+			addRenderableWidget(new EnderEyeButton(scaledWidth + x - 13, scaledHeight + y - 13, eye, unlocked,
+					(button) -> pressEye(eye, unlocked),
+					(button, stack, mouseX, mouseY) -> this.renderComponentTooltip(stack, tooltip, mouseX, mouseY)));
 		}
+
+		// ── Botón de encantamientos ───────────────────────────────────────────
+		// Botón de encantamientos: centrado entre FIERY(-2,4) y UNDEAD(2,4),
+		// una fila más abajo (y=5 → 5*13=65px). x=0 → centrado exactamente.
+		// Usa el mismo frame 27x27 que los demás botones con libro encantado de icono.
+		List<Component> enchTooltip = List.of(
+				Component.translatable("endereyesgui.enchantments.button.tooltip")
+		);
+		// Hueco natural del grid en x=0, y=-2 (entre GUARDIAN y LOST)
+		// Misma fórmula que el resto: scaledWidth + x*13 - 13, scaledHeight + y*13 - 13
+		addRenderableWidget(new EnchantmentBookButton(
+				scaledWidth + 0 * 13 - 13, scaledHeight + 7 * 13 - 13,
+				btn -> Networking.requestEnchantmentsList(),
+				enchTooltip
+		));
 	}
 
 	private void pressEye(IBottom eye, boolean unlocked) {
