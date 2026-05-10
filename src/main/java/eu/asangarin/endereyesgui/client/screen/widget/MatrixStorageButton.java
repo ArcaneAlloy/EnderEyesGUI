@@ -1,0 +1,52 @@
+package eu.asangarin.endereyesgui.client.screen.widget;
+
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
+import eu.asangarin.endereyesgui.EnderEyesGUI;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.network.chat.CommonComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.registries.ForgeRegistries;
+import org.jetbrains.annotations.NotNull;
+import java.util.List;
+
+public class MatrixStorageButton extends Button {
+    private static final ResourceLocation EYE_FRAME_LOCATION =
+            new ResourceLocation(EnderEyesGUI.MODID, "textures/gui/eye_frame.png");
+
+    private static ItemStack getIcon() {
+        // Muestra el tier4 como icono representativo del sistema
+        var block = ForgeRegistries.BLOCKS.getValue(
+                new ResourceLocation("occultism", "storage_stabilizer_tier4"));
+        if (block != null) return new ItemStack(block);
+        // Fallback: tier1
+        var block1 = ForgeRegistries.BLOCKS.getValue(
+                new ResourceLocation("occultism", "storage_stabilizer_tier1"));
+        return block1 != null ? new ItemStack(block1) : ItemStack.EMPTY;
+    }
+
+    private final List<Component> tooltip;
+
+    public MatrixStorageButton(int x, int y, OnPress onPress, List<Component> tooltip) {
+        super(x, y, 27, 27, CommonComponents.EMPTY, onPress);
+        this.tooltip = tooltip;
+    }
+
+    @Override
+    public void renderButton(@NotNull PoseStack stack, int mouseX, int mouseY, float delta) {
+        RenderSystem.setShader(GameRenderer::getPositionTexShader);
+        RenderSystem.setShaderTexture(0, EYE_FRAME_LOCATION);
+        RenderSystem.enableDepthTest();
+        int v = isHoveredOrFocused() ? 27 : 0;
+        blit(stack, this.x, this.y, 0f, (float) v, this.width, this.height, 64, 64);
+        ItemStack icon = getIcon();
+        if (!icon.isEmpty())
+            Minecraft.getInstance().getItemRenderer().renderAndDecorateFakeItem(icon, this.x + 5, this.y + 5);
+        if (this.isHovered && Minecraft.getInstance().screen != null)
+            Minecraft.getInstance().screen.renderComponentTooltip(stack, tooltip, mouseX, mouseY);
+    }
+}

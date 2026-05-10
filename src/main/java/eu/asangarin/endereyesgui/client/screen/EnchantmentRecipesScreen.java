@@ -2,6 +2,7 @@ package eu.asangarin.endereyesgui.client.screen;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import eu.asangarin.endereyesgui.Networking;
+import eu.asangarin.endereyesgui.compat.JeiCompat;
 import eu.asangarin.endereyesgui.util.EnchantmentRecipeData;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -50,6 +51,7 @@ public class EnchantmentRecipesScreen extends Screen {
 
 	// ── Widget ────────────────────────────────────────────────────────────────
 	private RecipeList recipeList;
+	private net.minecraft.world.item.ItemStack jeiHoveredItem = net.minecraft.world.item.ItemStack.EMPTY;
 
 	public EnchantmentRecipesScreen(List<EnchantmentRecipeData> recipes, int eyesEarned) {
 		super(Component.empty());
@@ -81,13 +83,13 @@ public class EnchantmentRecipesScreen extends Screen {
 				Component.translatable("endereyesgui.enchantments.title"),
 				width / 2, 6, 0xFFFFFF);
 		recipeList.render(stack, mx, my, delta);
-		renderDetailPanel(stack);
+		renderDetailPanel(stack, mx, my);
 		super.render(stack, mx, my, delta);
 	}
 
 	// ── Panel de detalle ──────────────────────────────────────────────────────
 
-	private void renderDetailPanel(PoseStack stack) {
+	private void renderDetailPanel(PoseStack stack, int mx, int my) {
 		int listW = (int) (width * LIST_FRACTION);
 		int px    = listW + PAD;
 		int py    = TITLE_H + 2;
@@ -127,6 +129,10 @@ public class EnchantmentRecipesScreen extends Screen {
 		ItemStack bookStack = buildBookStack(selected);
 		if (bookStack != null) {
 			minecraft.getItemRenderer().renderAndDecorateFakeItem(bookStack, bookX, bookY);
+			// Hover para JEI
+			if (mx >= bookX && mx < bookX + 16 && my >= bookY && my < bookY + 16) {
+				jeiHoveredItem = bookStack;
+			}
 		}
 
 		// Nombre a la derecha del libro, verticalmente centrado
@@ -183,6 +189,47 @@ public class EnchantmentRecipesScreen extends Screen {
 		fill(stack, px + PAD, ty, px + pw - PAD, ty + 1, C_DIVIDER);
 		ty += 6;
 
+		// ── Materiales + XP ───────────────────────────────────────────────────
+		// XP requerida
+		if (selected.getExperience() > 0) {
+			Component xpLine = Component.translatable("endereyesgui.enchantments.detail.experience",
+					selected.getExperience()).withStyle(ChatFormatting.GREEN);
+			drawCenteredString(stack, font, xpLine, cx, ty, 0xFFFFFF);
+			ty += font.lineHeight + 4;
+		}
+
+		// Ingredientes
+		java.util.List<net.minecraft.world.item.ItemStack> ings = selected.getIngredients();
+		if (!ings.isEmpty()) {
+			Component ingLabel = Component.translatable("endereyesgui.blacksmith.ingredients")
+					.withStyle(ChatFormatting.GRAY);
+			int lx2 = cx - font.width(ingLabel) / 2;
+			font.draw(stack, ingLabel.getString(), lx2, ty, 0xCCCCCC);
+			ty += font.lineHeight + 3;
+
+			int itemSize = 18;
+			int startX = px + PAD;
+			int ix = startX;
+			for (net.minecraft.world.item.ItemStack ing : ings) {
+				if (ix + itemSize > px + pw - PAD) { ix = startX; ty += itemSize + font.lineHeight; }
+				minecraft.getItemRenderer().renderAndDecorateFakeItem(ing, ix, ty);
+				// Cantidad en esquina inferior derecha, igual que el inventario
+				minecraft.getItemRenderer().renderGuiItemDecorations(font, ing, ix, ty);
+				// Hover para JEI
+				if (mx >= ix && mx < ix + 16 && my >= ty && my < ty + 16) {
+					jeiHoveredItem = ing;
+				}
+				ix += itemSize;
+			}
+			ty += itemSize + font.lineHeight + 4;
+		}
+
+		// ── Divisor ───────────────────────────────────────────────────────────
+		if (ty < py + ph - PAD) {
+			fill(stack, px + PAD, ty, px + pw - PAD, ty + 1, C_DIVIDER);
+			ty += 6;
+		}
+
 		// ── Descripción del encantamiento (EnchantmentDescriptions mod) ───────
 		// El mod añade claves con el patrón: "enchantment.NAMESPACE.PATH.desc"
 		// Ejemplo: "enchantment.airhop.air_hop.desc"
@@ -223,6 +270,22 @@ public class EnchantmentRecipesScreen extends Screen {
 			return ench.getFullname(data.getLevel()).copy().withStyle(color);
 		}
 		return Component.literal(data.getEnchantmentId().getPath()).withStyle(color);
+	}
+
+	@Override
+	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+		if (JeiCompat.isAvailable() && !jeiHoveredItem.isEmpty()) {
+			var key = com.mojang.blaze3d.platform.InputConstants.getKey(keyCode, scanCode);
+			if (JeiCompat.isShowRecipesKey(key)) {
+				JeiCompat.showRecipes(jeiHoveredItem);
+				return true;
+			}
+			if (JeiCompat.isShowUsagesKey(key)) {
+				JeiCompat.showUsages(jeiHoveredItem);
+				return true;
+			}
+		}
+		return super.keyPressed(keyCode, scanCode, modifiers);
 	}
 
 	@Override

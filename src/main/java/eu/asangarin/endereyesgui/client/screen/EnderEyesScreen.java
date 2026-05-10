@@ -5,6 +5,11 @@ import eu.asangarin.endereyesgui.Networking;
 import eu.asangarin.endereyesgui.api.IBottom;
 import eu.asangarin.endereyesgui.client.screen.widget.EnderEyeButton;
 import eu.asangarin.endereyesgui.client.screen.widget.EnchantmentBookButton;
+import eu.asangarin.endereyesgui.client.screen.widget.BlacksmithButton;
+import eu.asangarin.endereyesgui.client.screen.widget.ExplorerButton;
+import eu.asangarin.endereyesgui.client.screen.widget.DruidButton;
+import eu.asangarin.endereyesgui.client.screen.widget.MatrixStorageButton;
+import eu.asangarin.endereyesgui.client.screen.MatrixStorageScreen;
 import eu.asangarin.endereyesgui.util.DimensionBottom;
 import eu.asangarin.endereyesgui.util.EnderEye;
 import mc.duzo.ender_journey.capabilities.PortalPlayer;
@@ -87,9 +92,52 @@ public class EnderEyesScreen extends Screen {
 		// Hueco natural del grid en x=0, y=-2 (entre GUARDIAN y LOST)
 		// Misma fórmula que el resto: scaledWidth + x*13 - 13, scaledHeight + y*13 - 13
 		addRenderableWidget(new EnchantmentBookButton(
-				scaledWidth + 0 * 13 - 13, scaledHeight + 7 * 13 - 13,
+				scaledWidth + (-4) * 13 - 13, scaledHeight + 7 * 13 - 13,
 				btn -> Networking.requestEnchantmentsList(),
 				enchTooltip
+		));
+
+		// Botón Blacksmith: a la derecha del de encantamientos (x=2, y=7)
+		List<Component> smithTooltip = List.of(
+				Component.translatable("endereyesgui.blacksmith.button.tooltip")
+		);
+		addRenderableWidget(new BlacksmithButton(
+				scaledWidth + 0 * 13 - 13, scaledHeight + 7 * 13 - 13,
+				btn -> Networking.requestBlacksmithList(),
+				smithTooltip
+		));
+
+		// Botón Explorer: x=-2, y=7
+		List<Component> explorerTooltip = List.of(
+				Component.translatable("endereyesgui.explorer.button.tooltip")
+		);
+		addRenderableWidget(new ExplorerButton(
+				scaledWidth + (-8) * 13 - 13, scaledHeight + 7 * 13 - 13,
+				btn -> Networking.requestExplorerList(),
+				explorerTooltip
+		));
+
+		// Botón Druid: x=4, y=7
+		List<Component> druidTooltip = List.of(
+				Component.translatable("endereyesgui.druid.button.tooltip")
+		);
+		addRenderableWidget(new DruidButton(
+				scaledWidth + 4 * 13 - 13, scaledHeight + 7 * 13 - 13,
+				btn -> Networking.requestDruidList(),
+				druidTooltip
+		));
+
+		// Botón Matrix Storage: x=8, y=7 (mismo X que BEYOND_THE_END)
+		List<Component> matrixTooltip = List.of(
+				Component.translatable("endereyesgui.matrix.button.tooltip")
+		);
+		PortalPlayer portalPlayer2 = PortalPlayer.get(minecraft.player).orElse(null);
+		int eyesEarned2 = portalPlayer2 != null ? portalPlayer2.getEyesEarn() : 0;
+		int finalEyesEarned = eyesEarned2;
+		addRenderableWidget(new MatrixStorageButton(
+				scaledWidth + 8 * 13 - 13, scaledHeight + 7 * 13 - 13,
+				btn -> minecraft.setScreen(new MatrixStorageScreen(finalEyesEarned)),
+				matrixTooltip
 		));
 	}
 

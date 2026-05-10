@@ -9,6 +9,7 @@ import mc.duzo.ender_journey.capabilities.PortalPlayer;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.network.NetworkEvent;
 import net.minecraftforge.registries.ForgeRegistries;
 
@@ -82,9 +83,17 @@ public class C2SRequestEnchantmentsPacket {
                 boolean unlocked = unlockedIds.contains(warlock.getId());
                 int eyesStillNeeded = warlock.getNeedEyes();
 
+                // Todos los ingredientes de la receta
+                List<ItemStack> ings = new java.util.ArrayList<>();
+                for (net.minecraft.world.item.crafting.Ingredient ing : warlock.getIngredients()) {
+                    ItemStack[] items = ing.getItems();
+                    if (items.length > 0) ings.add(items[0]);
+                }
+
                 dataList.add(new EnchantmentRecipeData(
                         warlock.getId(), enchId,
-                        warlock.getLevel(), eyesStillNeeded, unlocked
+                        warlock.getLevel(), eyesStillNeeded, unlocked,
+                        warlock.getExperience(), ings
                 ));
             }
 
