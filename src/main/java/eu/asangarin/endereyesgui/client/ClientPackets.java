@@ -1,6 +1,7 @@
 package eu.asangarin.endereyesgui.client;
 
 import eu.asangarin.endereyesgui.client.screen.*;
+import eu.asangarin.endereyesgui.client.EnchantmentCache;
 import eu.asangarin.endereyesgui.packet.*;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.network.NetworkEvent;
@@ -11,7 +12,10 @@ public class ClientPackets {
         Minecraft.getInstance().setScreen(new EnderEyesScreen(msg.getEyeSet()));
     }
     public static void handleEnchantmentsPacket(S2CEnchantmentsListPacket msg, Supplier<NetworkEvent.Context> ctx) {
-        Minecraft.getInstance().setScreen(new EnchantmentRecipesScreen(msg.getRecipes(), msg.getEyesEarned()));
+        EnchantmentCache.update(msg.getRecipes(), msg.getEyesEarned());
+        if (msg.shouldOpenScreen()) {
+            Minecraft.getInstance().setScreen(new EnchantmentRecipesScreen(msg.getRecipes(), msg.getEyesEarned()));
+        }
     }
     public static void handleBlacksmithPacket(S2CBlacksmithListPacket msg, Supplier<NetworkEvent.Context> ctx) {
         Minecraft.getInstance().setScreen(new BlacksmithRecipesScreen(msg.getRecipes()));

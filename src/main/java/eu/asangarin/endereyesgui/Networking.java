@@ -44,9 +44,10 @@ public class Networking {
         INSTANCE.sendTo(new S2CEnderEyesGUIPacket(eyes), player.connection.connection, NetworkDirection.PLAY_TO_CLIENT);
     }
     public static void requestEnderGUI() { INSTANCE.sendToServer(new C2SEnderEyesButtonPacket()); }
-    public static void requestEnchantmentsList() { INSTANCE.sendToServer(new C2SRequestEnchantmentsPacket()); }
-    public static void sendEnchantmentsList(ServerPlayer p, List<EnchantmentRecipeData> r, int eyes) {
-        INSTANCE.sendTo(new S2CEnchantmentsListPacket(r, eyes), p.connection.connection, NetworkDirection.PLAY_TO_CLIENT);
+    public static void requestEnchantmentsList() { INSTANCE.sendToServer(new C2SRequestEnchantmentsPacket(true)); }
+    public static void requestEnchantmentsCache()  { INSTANCE.sendToServer(new C2SRequestEnchantmentsPacket(false)); }
+    public static void sendEnchantmentsList(ServerPlayer p, List<EnchantmentRecipeData> r, int eyes, boolean openScreen) {
+        INSTANCE.sendTo(new S2CEnchantmentsListPacket(r, eyes, openScreen), p.connection.connection, NetworkDirection.PLAY_TO_CLIENT);
     }
     public static void requestBlacksmithList() { INSTANCE.sendToServer(new C2SRequestBlacksmithPacket()); }
     public static void sendBlacksmithList(ServerPlayer p, List<BlacksmithRecipeData> r) {

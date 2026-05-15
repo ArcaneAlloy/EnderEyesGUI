@@ -139,5 +139,8 @@
   "endereyesgui.matrix.eyes_obtained": "Ender Eyes obtenidos: %s",
   "endereyesgui.matrix.current_tier": "Tier actual desbloqueado",
   "endereyesgui.matrix.no_tier": "Aún no has desbloqueado ningún tier",
-  "endereyesgui.matrix.progress": "Progreso de desbloqueo"
+  "endereyesgui.matrix.progress": "Progreso de desbloqueo",
+  "endereyesgui.tooltip.unlocked": "✔ Receta desbloqueada",
+  "endereyesgui.tooltip.can_unlock": "✔ Puedes desbloquearla (%s Ender Eyes)",
+  "endereyesgui.tooltip.needs_eyes": "Necesitas %s Ender Eyes para desbloquear"
 }

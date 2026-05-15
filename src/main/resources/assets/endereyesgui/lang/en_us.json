@@ -139,5 +139,8 @@
   "endereyesgui.matrix.eyes_obtained": "Ender Eyes obtained: %s",
   "endereyesgui.matrix.current_tier": "Current unlocked tier",
   "endereyesgui.matrix.no_tier": "No tier unlocked yet",
-  "endereyesgui.matrix.progress": "Unlock progress"
+  "endereyesgui.matrix.progress": "Unlock progress",
+  "endereyesgui.tooltip.unlocked": "✔ Recipe unlocked",
+  "endereyesgui.tooltip.can_unlock": "✔ You can unlock it (%s Ender Eyes)",
+  "endereyesgui.tooltip.needs_eyes": "Needs %s Ender Eyes to unlock"
 }

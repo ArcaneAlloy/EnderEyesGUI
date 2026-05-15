@@ -16,18 +16,22 @@ import java.util.function.Supplier;
  */
 public class S2CEnchantmentsListPacket {
 	private final List<EnchantmentRecipeData> recipes;
-	private final int eyesEarned; // total de ojos del jugador
+	private final int eyesEarned;
+	private final boolean openScreen; // total de ojos del jugador
 
-	public S2CEnchantmentsListPacket(List<EnchantmentRecipeData> recipes, int eyesEarned) {
+	public S2CEnchantmentsListPacket(List<EnchantmentRecipeData> recipes, int eyesEarned, boolean openScreen) {
 		this.recipes     = recipes;
 		this.eyesEarned  = eyesEarned;
+		this.openScreen  = openScreen;
 	}
 
 	public List<EnchantmentRecipeData> getRecipes()  { return recipes; }
 	public int getEyesEarned()                        { return eyesEarned; }
+	public boolean shouldOpenScreen()                 { return openScreen; }
 
 	public void encode(FriendlyByteBuf buf) {
 		buf.writeVarInt(eyesEarned);
+		buf.writeBoolean(openScreen);
 		buf.writeVarInt(recipes.size());
 		for (EnchantmentRecipeData data : recipes) {
 			data.encode(buf);
@@ -36,12 +40,13 @@ public class S2CEnchantmentsListPacket {
 
 	public static S2CEnchantmentsListPacket decode(FriendlyByteBuf buf) {
 		int eyesEarned = buf.readVarInt();
+		boolean openScreen = buf.readBoolean();
 		int size = buf.readVarInt();
 		List<EnchantmentRecipeData> list = new ArrayList<>(size);
 		for (int i = 0; i < size; i++) {
 			list.add(EnchantmentRecipeData.decode(buf));
 		}
-		return new S2CEnchantmentsListPacket(list, eyesEarned);
+		return new S2CEnchantmentsListPacket(list, eyesEarned, openScreen);
 	}
 
 	public void handle(Supplier<NetworkEvent.Context> ctx) {

@@ -31,11 +31,16 @@ import java.util.function.Supplier;
  * - eyesStillNeeded = max(recipe.needEyes - player.eyesEarned, 0)
  */
 public class C2SRequestEnchantmentsPacket {
+	private final boolean openScreen;
 
-    public void encode(FriendlyByteBuf buf) { /* sin datos */ }
+	public C2SRequestEnchantmentsPacket(boolean openScreen) { this.openScreen = openScreen; }
+	public C2SRequestEnchantmentsPacket() { this(true); }
+	public boolean shouldOpenScreen() { return openScreen; }
+
+    public void encode(FriendlyByteBuf buf) { buf.writeBoolean(openScreen); }
 
     public static C2SRequestEnchantmentsPacket decode(FriendlyByteBuf buf) {
-        return new C2SRequestEnchantmentsPacket();
+        return new C2SRequestEnchantmentsPacket(buf.readBoolean());
     }
 
     public void handle(Supplier<NetworkEvent.Context> ctx) {
@@ -70,7 +75,7 @@ public class C2SRequestEnchantmentsPacket {
                 allRecipes = sender.getServer().getRecipeManager()
                         .getAllRecipesFor(BteMobsRecipeTypes.WARLOCK_RECIPE.get());
             } catch (Exception e) {
-                Networking.sendEnchantmentsList(sender, List.of(), eyesEarned);
+                Networking.sendEnchantmentsList(sender, List.of(), eyesEarned, openScreen);
                 return;
             }
 
@@ -109,7 +114,7 @@ public class C2SRequestEnchantmentsPacket {
                                 : d.getEnchantmentId().getPath();
                     }));
 
-            Networking.sendEnchantmentsList(sender, dataList, eyesEarned);
+            Networking.sendEnchantmentsList(sender, dataList, eyesEarned, openScreen);
         });
         ctx.get().setPacketHandled(true);
     }
