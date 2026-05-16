@@ -7,6 +7,7 @@ import eu.asangarin.endereyesgui.util.BlacksmithRecipeData;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.ObjectSelectionList;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -53,11 +54,14 @@ public class BlacksmithRecipesScreen extends Screen {
 
 	private RecipeList recipeList;
 	private final List<Button> tabButtons = new ArrayList<>();
+	private EditBox searchBox;
+	private String searchTerm = "";
 
 	// Item bajo el cursor (para integración JEI)
 	private ItemStack hoveredIngredient = null;
 	private int hoveredIngX, hoveredIngY;
 	private ItemStack jeiHoveredItem = ItemStack.EMPTY;
+	private boolean hoveringResult = false;
 
 	public BlacksmithRecipesScreen(List<BlacksmithRecipeData> recipes) {
 		super(Component.empty());
@@ -69,7 +73,7 @@ public class BlacksmithRecipesScreen extends Screen {
 		super.init();
 		tabButtons.clear();
 		int listW   = (int) (width * LIST_FRACTION);
-		int listTop = TITLE_H + TAB_H + 4;
+		int listTop = TITLE_H + TAB_H + 18;
 		int listBot = height - BOTTOM_H;
 		int tabW    = listW / CATEGORY_ORDER.size();
 		int tabY    = TITLE_H + 2;
@@ -84,6 +88,16 @@ public class BlacksmithRecipesScreen extends Screen {
 			addRenderableWidget(tab);
 			tabButtons.add(tab);
 		}
+
+		searchBox = new EditBox(font, 2, TITLE_H + TAB_H + 4, listW - 4, 14,
+				Component.translatable("endereyesgui.search"));
+		searchBox.setMaxLength(50);
+		searchBox.setResponder(text -> {
+			searchTerm = text.toLowerCase();
+			selected = null;
+			rebuildList(listW, listTop, listBot);
+		});
+		addRenderableWidget(searchBox);
 
 		recipeList = new RecipeList(minecraft, listW, listBot - listTop, listTop);
 		addWidget(recipeList);
@@ -119,6 +133,7 @@ public class BlacksmithRecipesScreen extends Screen {
 		renderBackground(stack);
 		hoveredIngredient = null;
 		jeiHoveredItem = ItemStack.EMPTY;
+		hoveringResult = false;
 
 		drawCenteredString(stack, font,
 				Component.translatable("endereyesgui.blacksmith.title"), width / 2, 6, 0xFFFFFF);
@@ -145,6 +160,8 @@ public class BlacksmithRecipesScreen extends Screen {
 		// Tooltip del ingrediente al final (encima de todo)
 		if (hoveredIngredient != null) {
 			renderTooltip(stack, hoveredIngredient, hoveredIngX, hoveredIngY);
+		} else if (hoveringResult && selected != null) {
+			renderTooltip(stack, selected.getResult(), mx, my);
 		}
 	}
 
@@ -181,10 +198,9 @@ public class BlacksmithRecipesScreen extends Screen {
 
 		// ── Fila título: item + nombre ────────────────────────────────────────
 		minecraft.getItemRenderer().renderAndDecorateFakeItem(selected.getResult(), px + PAD, ty);
-		// Hover item resultado para JEI
-		if (mx >= px + PAD && mx < px + PAD + 16 && my >= ty && my < ty + 16) {
-			jeiHoveredItem = selected.getResult();
-		}
+		// Hover item resultado para JEI y tooltip
+		hoveringResult = (mx >= px + PAD && mx < px + PAD + 16 && my >= ty && my < ty + 16);
+		if (hoveringResult) jeiHoveredItem = selected.getResult();
 		int nameX = px + PAD + 16 + 4;
 		int nameW = pw - PAD - 16 - 4 - PAD;
 		font.draw(stack, font.plainSubstrByWidth(selected.getResult().getHoverName().getString(), nameW),
@@ -409,7 +425,11 @@ public class BlacksmithRecipesScreen extends Screen {
 		private void populate() {
 			for (Map.Entry<Integer, List<BlacksmithRecipeData>> e : recipesByTier().entrySet()) {
 				addEntry(new TierHeader(e.getKey()));
-				for (BlacksmithRecipeData d : e.getValue()) addEntry(new RecipeEntry(d));
+				for (BlacksmithRecipeData d : e.getValue()) {
+				if (searchTerm.isEmpty() || d.getResult().getHoverName().getString().toLowerCase().contains(searchTerm)) {
+					addEntry(new RecipeEntry(d));
+				}
+			}
 			}
 		}
 

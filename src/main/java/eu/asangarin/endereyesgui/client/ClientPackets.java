@@ -12,9 +12,9 @@ public class ClientPackets {
         Minecraft.getInstance().setScreen(new EnderEyesScreen(msg.getEyeSet()));
     }
     public static void handleEnchantmentsPacket(S2CEnchantmentsListPacket msg, Supplier<NetworkEvent.Context> ctx) {
-        EnchantmentCache.update(msg.getRecipes(), msg.getEyesEarned());
+        EnchantmentCache.update(msg.getRecipes(), msg.getPotions(), msg.getEyesEarned());
         if (msg.shouldOpenScreen()) {
-            Minecraft.getInstance().setScreen(new EnchantmentRecipesScreen(msg.getRecipes(), msg.getEyesEarned()));
+            Minecraft.getInstance().setScreen(new EnchantmentRecipesScreen(msg.getRecipes(), msg.getPotions(), msg.getEyesEarned()));
         }
     }
     public static void handleBlacksmithPacket(S2CBlacksmithListPacket msg, Supplier<NetworkEvent.Context> ctx) {

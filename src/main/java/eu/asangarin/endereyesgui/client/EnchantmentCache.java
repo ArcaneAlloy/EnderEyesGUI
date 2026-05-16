@@ -1,6 +1,7 @@
 package eu.asangarin.endereyesgui.client;
 
 import eu.asangarin.endereyesgui.util.EnchantmentRecipeData;
+import eu.asangarin.endereyesgui.util.WarlockPotionRecipeData;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.HashMap;
@@ -19,7 +20,12 @@ public class EnchantmentCache {
     private static final Map<Key, EnchantmentRecipeData> CACHE = new HashMap<>();
     private static int cachedEyesEarned = 0;
 
-    public static void update(List<EnchantmentRecipeData> recipes, int eyesEarned) {
+    private static List<WarlockPotionRecipeData> cachedPotions = new java.util.ArrayList<>();
+
+    public static List<WarlockPotionRecipeData> getPotions() { return cachedPotions; }
+
+    public static void update(List<EnchantmentRecipeData> recipes, List<WarlockPotionRecipeData> potions, int eyesEarned) {
+        cachedPotions = potions;
         CACHE.clear();
         for (EnchantmentRecipeData data : recipes) {
             CACHE.put(new Key(data.getEnchantmentId(), data.getLevel()), data);

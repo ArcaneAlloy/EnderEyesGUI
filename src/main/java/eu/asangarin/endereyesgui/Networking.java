@@ -3,6 +3,7 @@ package eu.asangarin.endereyesgui;
 import eu.asangarin.endereyesgui.packet.*;
 import eu.asangarin.endereyesgui.util.BlacksmithRecipeData;
 import eu.asangarin.endereyesgui.util.EnchantmentRecipeData;
+import eu.asangarin.endereyesgui.util.WarlockPotionRecipeData;
 import eu.asangarin.endereyesgui.util.SimpleRecipeData;
 import eu.asangarin.endereyesgui.util.EnderEye;
 import net.minecraft.resources.ResourceLocation;
@@ -46,8 +47,8 @@ public class Networking {
     public static void requestEnderGUI() { INSTANCE.sendToServer(new C2SEnderEyesButtonPacket()); }
     public static void requestEnchantmentsList() { INSTANCE.sendToServer(new C2SRequestEnchantmentsPacket(true)); }
     public static void requestEnchantmentsCache()  { INSTANCE.sendToServer(new C2SRequestEnchantmentsPacket(false)); }
-    public static void sendEnchantmentsList(ServerPlayer p, List<EnchantmentRecipeData> r, int eyes, boolean openScreen) {
-        INSTANCE.sendTo(new S2CEnchantmentsListPacket(r, eyes, openScreen), p.connection.connection, NetworkDirection.PLAY_TO_CLIENT);
+    public static void sendEnchantmentsList(ServerPlayer p, List<EnchantmentRecipeData> r, List<WarlockPotionRecipeData> potions, int eyes, boolean openScreen) {
+        INSTANCE.sendTo(new S2CEnchantmentsListPacket(r, potions, eyes, openScreen), p.connection.connection, NetworkDirection.PLAY_TO_CLIENT);
     }
     public static void requestBlacksmithList() { INSTANCE.sendToServer(new C2SRequestBlacksmithPacket()); }
     public static void sendBlacksmithList(ServerPlayer p, List<BlacksmithRecipeData> r) {

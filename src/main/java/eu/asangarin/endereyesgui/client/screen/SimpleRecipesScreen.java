@@ -7,6 +7,7 @@ import eu.asangarin.endereyesgui.util.SimpleRecipeData;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.ObjectSelectionList;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -28,6 +29,7 @@ public class SimpleRecipesScreen extends Screen {
     private final String titleKey;
     private SimpleRecipeData selected = null;
     private ItemStack jeiHoveredItem = ItemStack.EMPTY;
+    private boolean hoveringResult = false;
 
     private static final float LIST_FRACTION = 0.50f;
     private static final int   TITLE_H       = 20;
@@ -47,6 +49,8 @@ public class SimpleRecipesScreen extends Screen {
     private static final String ICON_ERR = "\u2718 ";
 
     private RecipeList recipeList;
+    private EditBox searchBox;
+    private String searchTerm = "";
 
     public SimpleRecipesScreen(List<SimpleRecipeData> recipes, String titleKey) {
         super(Component.empty());
@@ -58,8 +62,20 @@ public class SimpleRecipesScreen extends Screen {
     protected void init() {
         super.init();
         int listW   = (int) (width * LIST_FRACTION);
-        int listTop = TITLE_H + 2;
+        int listTop = TITLE_H + 18;
         int listBot = height - BOTTOM_H;
+
+        searchBox = new EditBox(font, 2, TITLE_H + 2, listW - 4, 14,
+                Component.translatable("endereyesgui.search"));
+        searchBox.setMaxLength(50);
+        searchBox.setResponder(text -> {
+            searchTerm = text.toLowerCase();
+            children().removeIf(c -> c instanceof RecipeList);
+            recipeList = new RecipeList(minecraft, listW, listBot - listTop, listTop);
+            addWidget(recipeList);
+        });
+        addRenderableWidget(searchBox);
+
         recipeList = new RecipeList(minecraft, listW, listBot - listTop, listTop);
         addWidget(recipeList);
         addRenderableWidget(new Button(
@@ -73,13 +89,17 @@ public class SimpleRecipesScreen extends Screen {
     public void render(@NotNull PoseStack stack, int mx, int my, float delta) {
         renderBackground(stack);
         jeiHoveredItem = ItemStack.EMPTY;
+        hoveringResult = false;
         drawCenteredString(stack, font,
-                Component.translatable(titleKey), width / 2, 6, 0xFFFFFF);
+                Component.translatable(titleKey).withStyle(net.minecraft.ChatFormatting.WHITE),
+                width / 2, 6, 0xFFFFFF);
         recipeList.render(stack, mx, my, delta);
         renderDetailPanel(stack, mx, my);
         super.render(stack, mx, my, delta);
         if (hoveredIngredient != null)
             renderTooltip(stack, hoveredIngredient, hoveredIngX, hoveredIngY);
+        else if (hoveringResult && selected != null)
+            renderTooltip(stack, selected.getResult(), mx, my);
     }
 
     private ItemStack hoveredIngredient = null;
@@ -115,11 +135,13 @@ public class SimpleRecipesScreen extends Screen {
 
         // ── Fila título: item + nombre ────────────────────────────────────────
         minecraft.getItemRenderer().renderAndDecorateFakeItem(selected.getResult(), px + PAD, ty);
-        if (mx >= px + PAD && mx < px + PAD + 16 && my >= ty && my < ty + 16)
-            jeiHoveredItem = selected.getResult();
-        String nameStr = font.plainSubstrByWidth(selected.getResult().getHoverName().getString(),
-                pw - PAD - 16 - 4 - PAD);
-        font.draw(stack, nameStr, px + PAD + 16 + 4, ty + (16 - font.lineHeight) / 2, 0xDD00FF);
+        hoveringResult = (mx >= px + PAD && mx < px + PAD + 16 && my >= ty && my < ty + 16);
+        if (hoveringResult) jeiHoveredItem = selected.getResult();
+        String resultName = net.minecraft.ChatFormatting.stripFormatting(
+                selected.getResult().getHoverName().getString());
+        if (resultName == null) resultName = selected.getResult().getHoverName().getString();
+        font.drawShadow(stack, font.plainSubstrByWidth(resultName, pw - PAD - 16 - 4 - PAD),
+                px + PAD + 16 + 4, ty + (16 - font.lineHeight) / 2, 0xDD00FF);
         ty += 16 + 6;
 
         // ── Divisor ───────────────────────────────────────────────────────────
@@ -149,6 +171,33 @@ public class SimpleRecipesScreen extends Screen {
         // ── Divisor ───────────────────────────────────────────────────────────
         fill(stack, px + PAD, ty, px + pw - PAD, ty + 1, C_DIVIDER);
         ty += 6;
+
+        // ── Descripción del compás (BeyondTheEndCompass) ─────────────────────
+        // Patrón: beyondtheendcompass:compass_X_Y -> tooltip.beyondtheendcompass.Y.1 y .2
+        net.minecraft.resources.ResourceLocation compassId =
+                net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(selected.getResult().getItem());
+        if (compassId != null && "beyondtheendcompass".equals(compassId.getNamespace())) {
+            String[] parts = compassId.getPath().split("_");
+            for (int i = 1; i < parts.length; i++) {
+                String suffix = String.join("_", java.util.Arrays.copyOfRange(parts, i, parts.length));
+                Component c1 = Component.translatable("tooltip.beyondtheendcompass." + suffix + ".1");
+                Component c2 = Component.translatable("tooltip.beyondtheendcompass." + suffix + ".2");
+                if (!c1.getString().equals("tooltip.beyondtheendcompass." + suffix + ".1")) {
+                    for (net.minecraft.util.FormattedCharSequence line :
+                            font.split(c1.copy().withStyle(net.minecraft.ChatFormatting.DARK_GRAY), pw - PAD * 2)) {
+                        font.draw(stack, line, cx - font.width(line) / 2, ty, 0xAAAAAA);
+                        ty += font.lineHeight + 2;
+                    }
+                    for (net.minecraft.util.FormattedCharSequence line :
+                            font.split(c2.copy().withStyle(net.minecraft.ChatFormatting.DARK_AQUA), pw - PAD * 2)) {
+                        font.draw(stack, line, cx - font.width(line) / 2, ty, 0x55FFFF);
+                        ty += font.lineHeight + 2;
+                    }
+                    ty += 4;
+                    break;
+                }
+            }
+        }
 
         // ── Ingredientes ──────────────────────────────────────────────────────
         hoveredIngredient = null;
@@ -197,7 +246,11 @@ public class SimpleRecipesScreen extends Screen {
             setRenderHeader(false, 0);
             setRenderBackground(false);
             setRenderTopAndBottom(false);
-            for (SimpleRecipeData d : recipes) addEntry(new Entry(d));
+            for (SimpleRecipeData d : recipes) {
+                if (searchTerm.isEmpty() || d.getResult().getHoverName().getString().toLowerCase().contains(searchTerm)) {
+                    addEntry(new Entry(d));
+                }
+            }
         }
 
         @Override
@@ -228,9 +281,13 @@ public class SimpleRecipesScreen extends Screen {
                 else if (hovered) fill(stack, left, top, left + width, top + height, C_HOVER);
 
                 String icon = data.isUnlocked() ? ICON_OK : ICON_ERR;
-                font.draw(stack, icon, left + 2, top + 2, data.isUnlocked() ? C_UNLOCKED : C_LOCKED);
+                font.drawShadow(stack, icon, left + 2, top + 2, data.isUnlocked() ? C_UNLOCKED : C_LOCKED);
                 int nameX = left + 2 + font.width(icon);
-                font.draw(stack, font.plainSubstrByWidth(data.getResult().getHoverName().getString(),
+                // Limpiar códigos §X del nombre para forzar nuestro color
+                String rawName = net.minecraft.ChatFormatting.stripFormatting(
+                        data.getResult().getHoverName().getString());
+                if (rawName == null) rawName = data.getResult().getHoverName().getString();
+                font.drawShadow(stack, font.plainSubstrByWidth(rawName,
                         width - font.width(icon) - 8), nameX, top + 2,
                         data.isUnlocked() ? 0xEE88FF : 0x996699);
             }
