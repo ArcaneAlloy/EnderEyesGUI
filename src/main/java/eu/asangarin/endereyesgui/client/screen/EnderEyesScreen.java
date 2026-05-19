@@ -16,7 +16,9 @@ import mc.duzo.ender_journey.capabilities.PortalPlayer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.multiplayer.ClientAdvancements;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -25,6 +27,44 @@ import java.util.List;
 
 public class EnderEyesScreen extends Screen {
 	private final EnumSet<EnderEye> eyeSet;
+
+	// Advancements que indican que el portal del Twilight Forest ha sido abierto/visitado.
+	// "twilightforest:root" se otorga al entrar al TF por primera vez.
+	// "twilightforest:portal" se otorga al construir el portal (si existe en tu versión del mod).
+	private static final ResourceLocation TF_ROOT   = new ResourceLocation("twilightforest", "root");
+	private static final ResourceLocation TF_PORTAL = new ResourceLocation("twilightforest", "portal");
+
+	private boolean hasTwilightForestAccess() {
+		// Flag del mod base: se activa al entrar al TF por primera vez
+		PortalPlayer pp = PortalPlayer.get(minecraft.player).orElse(null);
+		if (pp != null && pp.visitTwilightForest()) return true;
+
+		// Fallback: comprobar advancements del cliente directamente
+		// (cubre el caso de haber abierto el portal pero no haber entrado)
+		var advManager = minecraft.player.connection.getAdvancements();
+		return checkAdvancement(advManager, TF_ROOT) || checkAdvancement(advManager, TF_PORTAL);
+	}
+
+	private static boolean checkAdvancement(ClientAdvancements manager, ResourceLocation id) {
+		try {
+			// Usamos reflection para evitar depender de métodos que varían entre versiones.
+			// ClientAdvancements tiene un campo interno con el mapa de advancements -> progress.
+			// Buscamos el primer campo de tipo Map y lo iteramos.
+			for (java.lang.reflect.Field field : manager.getClass().getDeclaredFields()) {
+				if (!java.util.Map.class.isAssignableFrom(field.getType())) continue;
+				field.setAccessible(true);
+				@SuppressWarnings("unchecked")
+				java.util.Map<net.minecraft.advancements.Advancement, net.minecraft.advancements.AdvancementProgress> map =
+						(java.util.Map<net.minecraft.advancements.Advancement, net.minecraft.advancements.AdvancementProgress>) field.get(manager);
+				for (java.util.Map.Entry<net.minecraft.advancements.Advancement, net.minecraft.advancements.AdvancementProgress> entry : map.entrySet()) {
+					if (id.equals(entry.getKey().getId())) {
+						return entry.getValue() != null && entry.getValue().isDone();
+					}
+				}
+			}
+		} catch (Exception ignored) {}
+		return false;
+	}
 
 	public EnderEyesScreen(EnumSet<EnderEye> eyeSet) {
 		super(Component.empty());
@@ -41,7 +81,7 @@ public class EnderEyesScreen extends Screen {
 			PortalPlayer portalPlayer = PortalPlayer.get(minecraft.player).orElse(null);
 			boolean unlocked = portalPlayer.getEyesEarn()>=eye.getEyes();
 			if(eye.isNeedAdvanced()){
-				unlocked = portalPlayer.visitTwilightForest();
+				unlocked = hasTwilightForestAccess();
 			}
 			List<Component> tooltip = new ArrayList<>();
 			Component nameComponent;
