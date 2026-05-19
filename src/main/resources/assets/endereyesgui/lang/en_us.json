@@ -156,5 +156,11 @@
   "endereyesgui.warlock.potion.normal_iii": "Potion III",
   "endereyesgui.warlock.potion.splash_iii": "Splash Potion III",
   "endereyesgui.warlock.potion.lingering_iii": "Lingering Potion III",
-  "endereyesgui.warlock.potion.essence": "Poisonous Essence"
+  "endereyesgui.warlock.potion.essence": "Poisonous Essence",
+  "endereyesgui.potions.button.tooltip": "View Warlock potions",
+  "endereyesgui.nature.button.tooltip": "View Druid & Explorer recipes",
+  "endereyesgui.nature.tab.explorer": "Explorer",
+  "endereyesgui.nature.tab.druid": "Druid",
+  "endereyesgui.nature.title.explorer": "Explorer & Druid Recipes",
+  "endereyesgui.nature.title.druid": "Explorer & Druid Recipes"
 }

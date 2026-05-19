@@ -5,9 +5,9 @@ import eu.asangarin.endereyesgui.Networking;
 import eu.asangarin.endereyesgui.api.IBottom;
 import eu.asangarin.endereyesgui.client.screen.widget.EnderEyeButton;
 import eu.asangarin.endereyesgui.client.screen.widget.EnchantmentBookButton;
+import eu.asangarin.endereyesgui.client.screen.widget.PotionButton;
 import eu.asangarin.endereyesgui.client.screen.widget.BlacksmithButton;
-import eu.asangarin.endereyesgui.client.screen.widget.ExplorerButton;
-import eu.asangarin.endereyesgui.client.screen.widget.DruidButton;
+import eu.asangarin.endereyesgui.client.screen.widget.NatureButton;
 import eu.asangarin.endereyesgui.client.screen.widget.MatrixStorageButton;
 import eu.asangarin.endereyesgui.client.screen.MatrixStorageScreen;
 import eu.asangarin.endereyesgui.util.DimensionBottom;
@@ -84,20 +84,29 @@ public class EnderEyesScreen extends Screen {
 
 		// ── Botón de encantamientos ───────────────────────────────────────────
 		// Botón de encantamientos: centrado entre FIERY(-2,4) y UNDEAD(2,4),
-		// una fila más abajo (y=5 → 5*13=65px). x=0 → centrado exactamente.
-		// Usa el mismo frame 27x27 que los demás botones con libro encantado de icono.
+		// ── 5 botones en fila y=7: Nature(-8) Enchantments(-4) Blacksmith(0) Potions(4) Matrix(8) ──
+
+		// Botón Nature (Explorer + Druid): x=-8, y=7
+		List<Component> natureTooltip = List.of(
+				Component.translatable("endereyesgui.nature.button.tooltip")
+		);
+		addRenderableWidget(new NatureButton(
+				scaledWidth + (-8) * 13 - 13, scaledHeight + 7 * 13 - 13,
+				btn -> Networking.requestNatureList(),
+				natureTooltip
+		));
+
+		// Botón Encantamientos: x=-4, y=7
 		List<Component> enchTooltip = List.of(
 				Component.translatable("endereyesgui.enchantments.button.tooltip")
 		);
-		// Hueco natural del grid en x=0, y=-2 (entre GUARDIAN y LOST)
-		// Misma fórmula que el resto: scaledWidth + x*13 - 13, scaledHeight + y*13 - 13
 		addRenderableWidget(new EnchantmentBookButton(
 				scaledWidth + (-4) * 13 - 13, scaledHeight + 7 * 13 - 13,
 				btn -> Networking.requestEnchantmentsList(),
 				enchTooltip
 		));
 
-		// Botón Blacksmith: a la derecha del de encantamientos (x=2, y=7)
+		// Botón Blacksmith: x=0, y=7
 		List<Component> smithTooltip = List.of(
 				Component.translatable("endereyesgui.blacksmith.button.tooltip")
 		);
@@ -107,27 +116,17 @@ public class EnderEyesScreen extends Screen {
 				smithTooltip
 		));
 
-		// Botón Explorer: x=-2, y=7
-		List<Component> explorerTooltip = List.of(
-				Component.translatable("endereyesgui.explorer.button.tooltip")
+		// Botón Pociones: x=4, y=7
+		List<Component> potionTooltip = List.of(
+				Component.translatable("endereyesgui.potions.button.tooltip")
 		);
-		addRenderableWidget(new ExplorerButton(
-				scaledWidth + (-8) * 13 - 13, scaledHeight + 7 * 13 - 13,
-				btn -> Networking.requestExplorerList(),
-				explorerTooltip
-		));
-
-		// Botón Druid: x=4, y=7
-		List<Component> druidTooltip = List.of(
-				Component.translatable("endereyesgui.druid.button.tooltip")
-		);
-		addRenderableWidget(new DruidButton(
+		addRenderableWidget(new PotionButton(
 				scaledWidth + 4 * 13 - 13, scaledHeight + 7 * 13 - 13,
-				btn -> Networking.requestDruidList(),
-				druidTooltip
+				btn -> Networking.requestPotionsList(),
+				potionTooltip
 		));
 
-		// Botón Matrix Storage: x=8, y=7 (mismo X que BEYOND_THE_END)
+		// Botón Matrix Storage: x=8, y=7
 		List<Component> matrixTooltip = List.of(
 				Component.translatable("endereyesgui.matrix.button.tooltip")
 		);

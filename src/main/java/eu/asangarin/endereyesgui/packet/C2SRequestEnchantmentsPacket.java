@@ -34,15 +34,25 @@ import java.util.function.Supplier;
  */
 public class C2SRequestEnchantmentsPacket {
 	private final boolean openScreen;
+	private final boolean openPotions;
 
-	public C2SRequestEnchantmentsPacket(boolean openScreen) { this.openScreen = openScreen; }
-	public C2SRequestEnchantmentsPacket() { this(true); }
-	public boolean shouldOpenScreen() { return openScreen; }
+	public C2SRequestEnchantmentsPacket(boolean openScreen, boolean openPotions) {
+		this.openScreen  = openScreen;
+		this.openPotions = openPotions;
+	}
+	public C2SRequestEnchantmentsPacket() { this(true, false); }
+	public boolean shouldOpenScreen()  { return openScreen; }
+	public boolean shouldOpenPotions() { return openPotions; }
 
-    public void encode(FriendlyByteBuf buf) { buf.writeBoolean(openScreen); }
+    public void encode(FriendlyByteBuf buf) {
+        buf.writeBoolean(openScreen);
+        buf.writeBoolean(openPotions);
+    }
 
     public static C2SRequestEnchantmentsPacket decode(FriendlyByteBuf buf) {
-        return new C2SRequestEnchantmentsPacket(buf.readBoolean());
+        boolean openScreen  = buf.readBoolean();
+        boolean openPotions = buf.readBoolean();
+        return new C2SRequestEnchantmentsPacket(openScreen, openPotions);
     }
 
     public void handle(Supplier<NetworkEvent.Context> ctx) {
@@ -77,14 +87,30 @@ public class C2SRequestEnchantmentsPacket {
                 allRecipes = sender.getServer().getRecipeManager()
                         .getAllRecipesFor(BteMobsRecipeTypes.WARLOCK_RECIPE.get());
             } catch (Exception e) {
-                Networking.sendEnchantmentsList(sender, List.of(), List.of(), eyesEarned, openScreen);
+                Networking.sendEnchantmentsList(sender, List.of(), List.of(), eyesEarned, openScreen, openPotions);
                 return;
             }
 
             List<EnchantmentRecipeData> dataList = new ArrayList<>();
 
             for (WarlockRecipe warlock : allRecipes) {
-                ResourceLocation enchId = ForgeRegistries.ENCHANTMENTS.getKey(warlock.getEnchantment());
+                ResourceLocation enchId = warlock.getEnchantment() != null
+                        ? ForgeRegistries.ENCHANTMENTS.getKey(warlock.getEnchantment())
+                        : null;
+                // Fallback: intentar obtener el ID desde la textura de la receta
+                // Textura: bte_mobs:textures/enchantments/potion_barrier_1.png -> dungeons_gear:potion_barrier
+                if (enchId == null && warlock.getTexture() != null) {
+                    String texPath = warlock.getTexture().getPath(); // textures/enchantments/X_LEVEL.png
+                    String enchName = texPath.replaceAll("textures/enchantments/", "")
+                            .replaceAll("_\\d+\\.png$", "");
+                    // Buscar en todos los registros de encantamientos
+                    for (net.minecraft.resources.ResourceLocation rl : ForgeRegistries.ENCHANTMENTS.getKeys()) {
+                        if (rl.getPath().equals(enchName)) {
+                            enchId = rl;
+                            break;
+                        }
+                    }
+                }
                 if (enchId == null) continue;
 
                 boolean unlocked = unlockedIds.contains(warlock.getId());
@@ -194,7 +220,7 @@ public class C2SRequestEnchantmentsPacket {
             potionList = new java.util.ArrayList<>(deduped.values());
             potionList.sort(java.util.Comparator.comparing(d -> d.getEffectId()));
 
-            Networking.sendEnchantmentsList(sender, dataList, potionList, eyesEarned, openScreen);
+            Networking.sendEnchantmentsList(sender, dataList, potionList, eyesEarned, openScreen, openPotions);
         });
         ctx.get().setPacketHandled(true);
     }

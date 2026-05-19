@@ -71,10 +71,16 @@ public class EnchantmentRecipesScreen extends Screen {
 
 	public EnchantmentRecipesScreen(List<EnchantmentRecipeData> recipes,
 	                                 List<WarlockPotionRecipeData> potions, int eyesEarned) {
+		this(recipes, potions, eyesEarned, "enchantments");
+	}
+
+	public EnchantmentRecipesScreen(List<EnchantmentRecipeData> recipes,
+	                                 List<WarlockPotionRecipeData> potions, int eyesEarned, String initialTab) {
 		super(Component.empty());
 		this.recipes    = new ArrayList<>(recipes);
 		this.potions    = new ArrayList<>(potions);
 		this.eyesEarned = eyesEarned;
+		this.activeTab  = initialTab;
 	}
 
 	@Override

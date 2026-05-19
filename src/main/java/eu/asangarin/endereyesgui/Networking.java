@@ -39,24 +39,33 @@ public class Networking {
                 C2SRequestSimpleRecipesPacket::encode, C2SRequestSimpleRecipesPacket::decode, C2SRequestSimpleRecipesPacket::handle);
         INSTANCE.registerMessage(7, S2CSimpleRecipeListPacket.class,
                 S2CSimpleRecipeListPacket::encode, S2CSimpleRecipeListPacket::decode, S2CSimpleRecipeListPacket::handle);
+        INSTANCE.registerMessage(8, C2SRequestNaturePacket.class,
+                C2SRequestNaturePacket::encode, C2SRequestNaturePacket::decode, C2SRequestNaturePacket::handle);
+        INSTANCE.registerMessage(9, S2CNatureListPacket.class,
+                S2CNatureListPacket::encode, S2CNatureListPacket::decode, S2CNatureListPacket::handle);
     }
 
     public static void openEnderGUI(ServerPlayer player, EnumSet<EnderEye> eyes) {
         INSTANCE.sendTo(new S2CEnderEyesGUIPacket(eyes), player.connection.connection, NetworkDirection.PLAY_TO_CLIENT);
     }
     public static void requestEnderGUI() { INSTANCE.sendToServer(new C2SEnderEyesButtonPacket()); }
-    public static void requestEnchantmentsList() { INSTANCE.sendToServer(new C2SRequestEnchantmentsPacket(true)); }
-    public static void requestEnchantmentsCache()  { INSTANCE.sendToServer(new C2SRequestEnchantmentsPacket(false)); }
-    public static void sendEnchantmentsList(ServerPlayer p, List<EnchantmentRecipeData> r, List<WarlockPotionRecipeData> potions, int eyes, boolean openScreen) {
-        INSTANCE.sendTo(new S2CEnchantmentsListPacket(r, potions, eyes, openScreen), p.connection.connection, NetworkDirection.PLAY_TO_CLIENT);
+    public static void requestEnchantmentsList() { INSTANCE.sendToServer(new C2SRequestEnchantmentsPacket(true, false)); }
+    public static void requestPotionsList()         { INSTANCE.sendToServer(new C2SRequestEnchantmentsPacket(true, true)); }
+    public static void requestEnchantmentsCache()  { INSTANCE.sendToServer(new C2SRequestEnchantmentsPacket(false, false)); }
+    public static void sendEnchantmentsList(ServerPlayer p, List<EnchantmentRecipeData> r, List<WarlockPotionRecipeData> potions, int eyes, boolean openScreen, boolean openPotions) {
+        INSTANCE.sendTo(new S2CEnchantmentsListPacket(r, potions, eyes, openScreen, openPotions), p.connection.connection, NetworkDirection.PLAY_TO_CLIENT);
     }
     public static void requestBlacksmithList() { INSTANCE.sendToServer(new C2SRequestBlacksmithPacket()); }
     public static void sendBlacksmithList(ServerPlayer p, List<BlacksmithRecipeData> r) {
         INSTANCE.sendTo(new S2CBlacksmithListPacket(r), p.connection.connection, NetworkDirection.PLAY_TO_CLIENT);
     }
+    public static void requestNatureList()   { INSTANCE.sendToServer(new C2SRequestNaturePacket()); }
     public static void requestExplorerList() { INSTANCE.sendToServer(new C2SRequestSimpleRecipesPacket("explorer")); }
     public static void requestDruidList()    { INSTANCE.sendToServer(new C2SRequestSimpleRecipesPacket("druid")); }
     public static void sendSimpleRecipeList(ServerPlayer p, List<SimpleRecipeData> r, String type) {
         INSTANCE.sendTo(new S2CSimpleRecipeListPacket(r, type), p.connection.connection, NetworkDirection.PLAY_TO_CLIENT);
+    }
+    public static void sendNatureList(ServerPlayer p, List<SimpleRecipeData> explorer, List<SimpleRecipeData> druid) {
+        INSTANCE.sendTo(new S2CNatureListPacket(explorer, druid), p.connection.connection, NetworkDirection.PLAY_TO_CLIENT);
     }
 }

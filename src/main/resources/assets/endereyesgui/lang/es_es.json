@@ -156,5 +156,11 @@
   "endereyesgui.warlock.potion.normal_iii": "Poción III",
   "endereyesgui.warlock.potion.splash_iii": "Poción Explosiva III",
   "endereyesgui.warlock.potion.lingering_iii": "Poción Persistente III",
-  "endereyesgui.warlock.potion.essence": "Esencia Venenosa"
+  "endereyesgui.warlock.potion.essence": "Esencia Venenosa",
+  "endereyesgui.potions.button.tooltip": "Ver pociones del Warlock",
+  "endereyesgui.nature.button.tooltip": "Ver recetas de Druida & Explorador",
+  "endereyesgui.nature.tab.explorer": "Explorador",
+  "endereyesgui.nature.tab.druid": "Druida",
+  "endereyesgui.nature.title.explorer": "Recetas de Explorador & Druida",
+  "endereyesgui.nature.title.druid": "Recetas de Explorador & Druida"
 }

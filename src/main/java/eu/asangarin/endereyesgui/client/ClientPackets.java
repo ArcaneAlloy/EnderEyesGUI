@@ -14,12 +14,20 @@ public class ClientPackets {
     public static void handleEnchantmentsPacket(S2CEnchantmentsListPacket msg, Supplier<NetworkEvent.Context> ctx) {
         EnchantmentCache.update(msg.getRecipes(), msg.getPotions(), msg.getEyesEarned());
         if (msg.shouldOpenScreen()) {
-            Minecraft.getInstance().setScreen(new EnchantmentRecipesScreen(msg.getRecipes(), msg.getPotions(), msg.getEyesEarned()));
+            String tab = msg.shouldOpenPotions() ? "potions" : "enchantments";
+            Minecraft.getInstance().setScreen(new EnchantmentRecipesScreen(msg.getRecipes(), msg.getPotions(), msg.getEyesEarned(), tab));
         }
     }
     public static void handleBlacksmithPacket(S2CBlacksmithListPacket msg, Supplier<NetworkEvent.Context> ctx) {
         Minecraft.getInstance().setScreen(new BlacksmithRecipesScreen(msg.getRecipes()));
     }
+    public static void handleNaturePacket(S2CNatureListPacket msg, Supplier<NetworkEvent.Context> ctx) {
+        ctx.get().enqueueWork(() ->
+            Minecraft.getInstance().setScreen(
+                new NatureRecipesScreen(msg.getExplorerRecipes(), msg.getDruidRecipes()))
+        );
+    }
+
     public static void handleSimpleRecipePacket(S2CSimpleRecipeListPacket msg, Supplier<NetworkEvent.Context> ctx) {
         String titleKey = "explorer".equals(msg.getType())
                 ? "endereyesgui.explorer.title"
