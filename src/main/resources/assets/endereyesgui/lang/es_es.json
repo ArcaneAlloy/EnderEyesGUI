@@ -96,8 +96,8 @@
   "endereyes.dim_the_end.description.1": "Se necesitan 16 Ojos de Ender diferentes para desbloquear este portal.",
   "endereyes.dim_the_end.description.2": "Puedes acceder a él en la Segunda Planta del Forgotten Realm.",
   "endereyesgui.enchantments.button": "Encantamientos",
-  "endereyesgui.enchantments.button.tooltip": "Ver recetas del Warlock",
-  "endereyesgui.enchantments.title": "Warlock Recipes",
+  "endereyesgui.enchantments.button.tooltip": "Ver Recetas de Encantamiento",
+  "endereyesgui.enchantments.title": "Recetas de Encantamiento",
   "endereyesgui.enchantments.detail.hint": "Haz clic en un encantamiento para ver su estado.",
   "endereyesgui.enchantments.detail.unlocked": "RECETA DESBLOQUEADA",
   "endereyesgui.enchantments.detail.unlocked_sub": "Puedes usar esta receta en el Warlock.",
@@ -162,5 +162,15 @@
   "endereyesgui.nature.tab.explorer": "Explorador",
   "endereyesgui.nature.tab.druid": "Druida",
   "endereyesgui.nature.title.explorer": "Recetas de Explorador & Druida",
-  "endereyesgui.nature.title.druid": "Recetas de Explorador & Druida"
+  "endereyesgui.nature.title.druid": "Recetas de Explorador & Druida",
+  "endereyesgui.enchantments.tab.all": "Todo",
+  "endereyesgui.enchantments.tab.helmet": "Casco",
+  "endereyesgui.enchantments.tab.chestplate": "Pechera",
+  "endereyesgui.enchantments.tab.leggings": "Pantalones",
+  "endereyesgui.enchantments.tab.boots": "Botas",
+  "endereyesgui.enchantments.tab.tools": "Herramientas",
+  "endereyesgui.enchantments.tab.other": "Otros",
+  "endereyesgui.warlock.potions.title": "Pociones del Warlock",
+  "endereyesgui.enchantments.tab.melee": "Melé",
+  "endereyesgui.enchantments.tab.ranged": "A Distancia"
 }

@@ -96,8 +96,8 @@
   "endereyes.dim_the_end.description.1": "16 different Ender Eyes must be obtained to unlock this portal.",
   "endereyes.dim_the_end.description.2": "You can access it on the Second Floor of The Forgotten Realm.",
   "endereyesgui.enchantments.button": "Enchantments",
-  "endereyesgui.enchantments.button.tooltip": "View Warlock recipes",
-  "endereyesgui.enchantments.title": "Warlock Recipes",
+  "endereyesgui.enchantments.button.tooltip": "View Enchanting Recipes",
+  "endereyesgui.enchantments.title": "Enchanting Recipes",
   "endereyesgui.enchantments.detail.hint": "Click an enchantment to see its status.",
   "endereyesgui.enchantments.detail.unlocked": "RECIPE UNLOCKED",
   "endereyesgui.enchantments.detail.unlocked_sub": "You can use this recipe at the Warlock.",
@@ -162,5 +162,15 @@
   "endereyesgui.nature.tab.explorer": "Explorer",
   "endereyesgui.nature.tab.druid": "Druid",
   "endereyesgui.nature.title.explorer": "Explorer & Druid Recipes",
-  "endereyesgui.nature.title.druid": "Explorer & Druid Recipes"
+  "endereyesgui.nature.title.druid": "Explorer & Druid Recipes",
+  "endereyesgui.enchantments.tab.all": "All",
+  "endereyesgui.enchantments.tab.helmet": "Helmet",
+  "endereyesgui.enchantments.tab.chestplate": "Chestplate",
+  "endereyesgui.enchantments.tab.leggings": "Leggings",
+  "endereyesgui.enchantments.tab.boots": "Boots",
+  "endereyesgui.enchantments.tab.tools": "Tools",
+  "endereyesgui.enchantments.tab.other": "Other",
+  "endereyesgui.warlock.potions.title": "Warlock Potions",
+  "endereyesgui.enchantments.tab.melee": "Melee",
+  "endereyesgui.enchantments.tab.ranged": "Ranged"
 }
