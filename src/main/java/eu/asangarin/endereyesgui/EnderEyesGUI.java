@@ -1,6 +1,7 @@
 package eu.asangarin.endereyesgui;
 
 import com.mojang.logging.LogUtils;
+import eu.asangarin.endereyesgui.event.EnderEyeUnlockHandler;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -21,6 +22,7 @@ public class EnderEyesGUI {
 		IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
 		modEventBus.addListener(this::commonSetup);
 		MinecraftForge.EVENT_BUS.register(this);
+		MinecraftForge.EVENT_BUS.register(EnderEyeUnlockHandler.class);
 	}
 
 	private void commonSetup(final FMLCommonSetupEvent event) {
