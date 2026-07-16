@@ -81,7 +81,8 @@ public class EnderEyeMilestoneListener {
 		S2CEnderEyeMilestonePacket packet = new S2CEnderEyeMilestonePacket(
 				eyeId, newEyes, EYES_TOTAL,
 				event.getHeartsGiven(), event.isStorageUpgraded(), portal,
-				combat, defensive, tools, other
+				combat, defensive, tools, other,
+				event.getChunksAdded(), event.getChunksTotal()
 		);
 
 		Networking.sendEnderEyeMilestone(player, packet);

@@ -25,10 +25,13 @@ public class S2CEnderEyeMilestonePacket {
 	private final int defensiveCount;
 	private final int toolsCount;
 	private final int otherCount;
+	private final int chunksAdded;
+	private final int chunksTotal;
 
 	public S2CEnderEyeMilestonePacket(String eyeId, int eyesEarned, int eyesTotal, int heartsGiven,
 	                                   boolean storageUpgraded, String portalOpened,
-	                                   int combatCount, int defensiveCount, int toolsCount, int otherCount) {
+	                                   int combatCount, int defensiveCount, int toolsCount, int otherCount,
+	                                   int chunksAdded, int chunksTotal) {
 		this.eyeId = eyeId;
 		this.eyesEarned = eyesEarned;
 		this.eyesTotal = eyesTotal;
@@ -39,6 +42,8 @@ public class S2CEnderEyeMilestonePacket {
 		this.defensiveCount = defensiveCount;
 		this.toolsCount = toolsCount;
 		this.otherCount = otherCount;
+		this.chunksAdded = chunksAdded;
+		this.chunksTotal = chunksTotal;
 	}
 
 	public String getEyeId() { return eyeId; }
@@ -51,6 +56,8 @@ public class S2CEnderEyeMilestonePacket {
 	public int getDefensiveCount() { return defensiveCount; }
 	public int getToolsCount() { return toolsCount; }
 	public int getOtherCount() { return otherCount; }
+	public int getChunksAdded() { return chunksAdded; }
+	public int getChunksTotal() { return chunksTotal; }
 
 	public void encode(FriendlyByteBuf buf) {
 		buf.writeUtf(eyeId);
@@ -63,6 +70,8 @@ public class S2CEnderEyeMilestonePacket {
 		buf.writeVarInt(defensiveCount);
 		buf.writeVarInt(toolsCount);
 		buf.writeVarInt(otherCount);
+		buf.writeVarInt(chunksAdded);
+		buf.writeVarInt(chunksTotal);
 	}
 
 	public static S2CEnderEyeMilestonePacket decode(FriendlyByteBuf buf) {
@@ -73,6 +82,8 @@ public class S2CEnderEyeMilestonePacket {
 				buf.readVarInt(),
 				buf.readBoolean(),
 				buf.readUtf(),
+				buf.readVarInt(),
+				buf.readVarInt(),
 				buf.readVarInt(),
 				buf.readVarInt(),
 				buf.readVarInt(),

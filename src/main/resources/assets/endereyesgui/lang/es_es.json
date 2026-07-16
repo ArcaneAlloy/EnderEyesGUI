@@ -9,6 +9,7 @@
   "endereyesgui.overlay.portal.nether": "🌀 Portal del Nether abierto",
   "endereyesgui.overlay.portal.end": "🌀 Portal del End abierto",
   "endereyesgui.overlay.portal.final": "🌀 Portal Final abierto",
+  "endereyesgui.overlay.chunks": "🗺 Home Dimension: +%s chunks (%s en total)",
   "endereyesgui.overlay.combat": "⚔ Encantamientos de combate: +%s",
   "endereyesgui.overlay.defensive": "🛡 Encantamientos defensivos: +%s",
   "endereyesgui.overlay.tools": "🛠 Encantamientos de herramientas: +%s",

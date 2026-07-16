@@ -81,6 +81,10 @@ public class EnderEyeOverlay {
 			lines.add(Component.translatable("endereyesgui.overlay.portal." + p.getPortalOpened())
 					.withStyle(ChatFormatting.GOLD));
 		}
+		if (p.getChunksAdded() > 0) {
+			lines.add(Component.translatable("endereyesgui.overlay.chunks", p.getChunksAdded(), p.getChunksTotal())
+					.withStyle(ChatFormatting.DARK_AQUA));
+		}
 		if (p.getCombatCount() > 0) {
 			lines.add(Component.translatable("endereyesgui.overlay.combat_expanded")
 					.withStyle(ChatFormatting.YELLOW));
