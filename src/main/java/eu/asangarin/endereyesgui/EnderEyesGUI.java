@@ -1,6 +1,7 @@
 package eu.asangarin.endereyesgui;
 
 import com.mojang.logging.LogUtils;
+import eu.asangarin.endereyesgui.event.EnderEyeMilestoneListener;
 import eu.asangarin.endereyesgui.event.EnderEyeUnlockHandler;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
@@ -23,6 +24,7 @@ public class EnderEyesGUI {
 		modEventBus.addListener(this::commonSetup);
 		MinecraftForge.EVENT_BUS.register(this);
 		MinecraftForge.EVENT_BUS.register(EnderEyeUnlockHandler.class);
+		MinecraftForge.EVENT_BUS.register(EnderEyeMilestoneListener.class);
 	}
 
 	private void commonSetup(final FMLCommonSetupEvent event) {
@@ -33,5 +35,10 @@ public class EnderEyesGUI {
 	public static class ClientModEvents {
 		@SubscribeEvent
 		public static void onClientSetup(FMLClientSetupEvent event) {}
+
+		@SubscribeEvent
+		public static void onRegisterOverlays(net.minecraftforge.client.event.RegisterGuiOverlaysEvent event) {
+			event.registerAboveAll("ender_eye_milestone", eu.asangarin.endereyesgui.client.EnderEyeOverlay.HUD);
+		}
 	}
 }

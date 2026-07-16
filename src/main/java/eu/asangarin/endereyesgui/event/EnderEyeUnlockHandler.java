@@ -88,5 +88,10 @@ public class EnderEyeUnlockHandler {
 				0.6f,
 				1.4f
 		);
+
+		// award() dispara AdvancementEarnEvent de forma síncrona, que enders_journey
+		// escucha y usa para publicar EnderEyeMilestoneEvent con los hitos reales
+		// (corazón/storage/portal). EnderEyeMilestoneListener recoge ese evento y
+		// se encarga de construir y enviar el overlay al jugador.
 	}
 }

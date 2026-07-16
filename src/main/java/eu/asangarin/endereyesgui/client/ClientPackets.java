@@ -34,4 +34,7 @@ public class ClientPackets {
                 : "endereyesgui.druid.title";
         Minecraft.getInstance().setScreen(new SimpleRecipesScreen(msg.getRecipes(), titleKey));
     }
+    public static void handleEnderEyeMilestonePacket(S2CEnderEyeMilestonePacket msg) {
+        EnderEyeOverlay.show(msg);
+    }
 }

@@ -43,6 +43,8 @@ public class Networking {
                 C2SRequestNaturePacket::encode, C2SRequestNaturePacket::decode, C2SRequestNaturePacket::handle);
         INSTANCE.registerMessage(9, S2CNatureListPacket.class,
                 S2CNatureListPacket::encode, S2CNatureListPacket::decode, S2CNatureListPacket::handle);
+        INSTANCE.registerMessage(10, S2CEnderEyeMilestonePacket.class,
+                S2CEnderEyeMilestonePacket::encode, S2CEnderEyeMilestonePacket::decode, S2CEnderEyeMilestonePacket::handle);
     }
 
     public static void openEnderGUI(ServerPlayer player, EnumSet<EnderEye> eyes) {
@@ -67,5 +69,8 @@ public class Networking {
     }
     public static void sendNatureList(ServerPlayer p, List<SimpleRecipeData> explorer, List<SimpleRecipeData> druid) {
         INSTANCE.sendTo(new S2CNatureListPacket(explorer, druid), p.connection.connection, NetworkDirection.PLAY_TO_CLIENT);
+    }
+    public static void sendEnderEyeMilestone(ServerPlayer p, S2CEnderEyeMilestonePacket packet) {
+        INSTANCE.sendTo(packet, p.connection.connection, NetworkDirection.PLAY_TO_CLIENT);
     }
 }
