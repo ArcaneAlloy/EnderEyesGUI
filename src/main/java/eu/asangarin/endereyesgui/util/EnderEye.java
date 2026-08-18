@@ -9,33 +9,33 @@ import java.util.Locale;
 import java.util.Map;
 
 public enum EnderEye implements IBottom {
-	// ── EASY (alfabético) ─────────────────────────────────────────────────────
+	// ── EASY (7) ────────────────────────────────────────────────────────────
 	BLACK    (-10, -5, EnderEyeDifficult.EASY),
-	COLD     ( -6, -5, EnderEyeDifficult.EASY),
-	CORRUPTED( -2, -5, EnderEyeDifficult.EASY),
-	EXOTIC   (  2, -5, EnderEyeDifficult.EASY),
-	LOST     (  6, -5, EnderEyeDifficult.EASY),
-	NETHER   ( 10, -5, EnderEyeDifficult.EASY),
-	ROGUE    (-10, -2, EnderEyeDifficult.EASY),
-	WITCH    ( -6, -2, EnderEyeDifficult.EASY),
-	// ── NORMAL (alfabético) ───────────────────────────────────────────────────
-	AURORA   ( -2, -2, EnderEyeDifficult.NORMAL),
-	CARMINITE(  2, -2, EnderEyeDifficult.NORMAL),
-	CURSED   (  6, -2, EnderEyeDifficult.NORMAL),
-	FIERY    ( 10, -2, EnderEyeDifficult.NORMAL),
-	GUARDIAN (-10,  1, EnderEyeDifficult.NORMAL),
-	MAGICAL  ( -6,  1, EnderEyeDifficult.NORMAL),
-	// ── HARD (alfabético) ─────────────────────────────────────────────────────
-	ABYSS    ( -2,  1, EnderEyeDifficult.HARD),
+	LOST     ( -6, -5, EnderEyeDifficult.EASY),
+	ROGUE    ( -2, -5, EnderEyeDifficult.EASY),
+	NETHER   (  2, -5, EnderEyeDifficult.EASY),
+	EXOTIC   (  6, -5, EnderEyeDifficult.EASY),
+	WITCH    ( 10, -5, EnderEyeDifficult.EASY),
+	TRADER   (-10, -2, EnderEyeDifficult.EASY),
+	// ── NORMAL / MEDIUM (8) ────────────────────────────────────────────────
+	COLD     ( -6, -2, EnderEyeDifficult.NORMAL),
+	CASTLE   ( -2, -2, EnderEyeDifficult.NORMAL),
+	MAGICAL  (  2, -2, EnderEyeDifficult.NORMAL),
+	GUARDIAN (  6, -2, EnderEyeDifficult.NORMAL),
+	EVIL     ( 10, -2, EnderEyeDifficult.NORMAL),
+	CURSED   (-10,  1, EnderEyeDifficult.NORMAL),
+	SPECTRAL ( -6,  1, EnderEyeDifficult.NORMAL),
+	FORBIDDEN( -2,  1, EnderEyeDifficult.NORMAL),
+	// ── HARD (9) ────────────────────────────────────────────────────────────
 	DESERT   (  2,  1, EnderEyeDifficult.HARD),
-	EVIL     (  6,  1, EnderEyeDifficult.HARD),
-	FLAME    ( 10,  1, EnderEyeDifficult.HARD),
-	MECH     (-10,  4, EnderEyeDifficult.HARD),
-	MONSTROUS( -6,  4, EnderEyeDifficult.HARD),
-	PARASITE ( -2,  4, EnderEyeDifficult.HARD),
-	SCULK    (  2,  4, EnderEyeDifficult.HARD),
-	UNDEAD   (  6,  4, EnderEyeDifficult.HARD),
-	VOID     ( 10,  4, EnderEyeDifficult.HARD);
+	ABYSS    (  6,  1, EnderEyeDifficult.HARD),
+	SCULK    ( 10,  1, EnderEyeDifficult.HARD),
+	UNDEAD   (-10,  4, EnderEyeDifficult.HARD),
+	FLAME    ( -6,  4, EnderEyeDifficult.HARD),
+	MECH     ( -2,  4, EnderEyeDifficult.HARD),
+	VOID     (  2,  4, EnderEyeDifficult.HARD),
+	PARASITE (  6,  4, EnderEyeDifficult.HARD),
+	FIERY    ( 10,  4, EnderEyeDifficult.HARD);
 
 	private static final EnderEye[] VALUES = values();
 	private static final Map<ResourceLocation, EnderEye> BY_ITEM_ID = new HashMap<>();
