@@ -149,6 +149,7 @@
   "endereyesgui.tooltip.unlocked": "✔ Recipe unlocked",
   "endereyesgui.tooltip.can_unlock": "✔ You can unlock it (%s Ender Eyes)",
   "endereyesgui.tooltip.needs_eyes": "Needs %s Ender Eyes to unlock",
+  "endereyesgui.tooltip.right_click_unlock": "Right-click to unlock",
   "endereyesgui.search": "Search...",
   "endereyesgui.warlock.tab.enchantments": "Enchantments",
   "endereyesgui.warlock.tab.potions": "Potions",
