@@ -27,15 +27,16 @@ public enum EnderEye implements IBottom {
 	SPECTRAL ( -6,  1, EnderEyeDifficult.NORMAL),
 	FORBIDDEN( -2,  1, EnderEyeDifficult.NORMAL),
 	// ── HARD (9) ────────────────────────────────────────────────────────────
-	DESERT   (  2,  1, EnderEyeDifficult.HARD),
-	ABYSS    (  6,  1, EnderEyeDifficult.HARD),
-	SCULK    ( 10,  1, EnderEyeDifficult.HARD),
-	UNDEAD   (-10,  4, EnderEyeDifficult.HARD),
-	FLAME    ( -6,  4, EnderEyeDifficult.HARD),
-	MECH     ( -2,  4, EnderEyeDifficult.HARD),
-	VOID     (  2,  4, EnderEyeDifficult.HARD),
-	PARASITE (  6,  4, EnderEyeDifficult.HARD),
-	FIERY    ( 10,  4, EnderEyeDifficult.HARD);
+	// Fiery el primero: de los difíciles es el más sencillo
+	FIERY    (  2,  1, EnderEyeDifficult.HARD),
+	DESERT   (  6,  1, EnderEyeDifficult.HARD),
+	ABYSS    ( 10,  1, EnderEyeDifficult.HARD),
+	SCULK    (-10,  4, EnderEyeDifficult.HARD),
+	UNDEAD   ( -6,  4, EnderEyeDifficult.HARD),
+	FLAME    ( -2,  4, EnderEyeDifficult.HARD),
+	MECH     (  2,  4, EnderEyeDifficult.HARD),
+	VOID     (  6,  4, EnderEyeDifficult.HARD),
+	PARASITE ( 10,  4, EnderEyeDifficult.HARD);
 
 	private static final EnderEye[] VALUES = values();
 	private static final Map<ResourceLocation, EnderEye> BY_ITEM_ID = new HashMap<>();
