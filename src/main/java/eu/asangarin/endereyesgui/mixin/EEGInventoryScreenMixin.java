@@ -17,6 +17,6 @@ public class EEGInventoryScreenMixin extends Screen {
 
 	@Inject(method = "init", at = @At("TAIL"))
 	private void eegInit(CallbackInfo ci) {
-		this.addRenderableWidget(new EnderEyeInventoryButton(width, height));
+		this.addRenderableWidget(new EnderEyeInventoryButton((InventoryScreen) (Object) this));
 	}
 }
