@@ -76,6 +76,8 @@ public class EnchantmentRecipesScreen extends Screen {
 	private RecipeList recipeList;
 	private EditBox searchBox;
 	private String searchTerm = "";
+	/** Scroll del panel de detalle (cuando no cabe todo). */
+	private final PanelScroll detailScroll = new PanelScroll();
 	private ItemStack jeiHoveredItem = ItemStack.EMPTY;
 	private boolean hoveringResult = false;
 	private int potionPanelScroll = 0;
@@ -438,8 +440,13 @@ public class EnchantmentRecipesScreen extends Screen {
 
 		recipeList.render(stack, mx, my, delta);
 
-		if (!openPotions) renderEnchantmentPanel(stack, mx, my);
-		else              renderPotionPanel(stack, mx, my);
+		if (!openPotions) {
+			renderEnchantmentPanel(stack, mx, my);
+			// Lo que queda recortado fuera del panel no muestra tooltip
+			if (detailScroll.finish(stack) && !detailScroll.contains(mx, my)) { hoveredIngredient = null; hoveringResult = false; jeiHoveredItem = ItemStack.EMPTY; }
+		} else {
+			renderPotionPanel(stack, mx, my);
+		}
 
 		super.render(stack, mx, my, delta);
 
@@ -471,8 +478,8 @@ public class EnchantmentRecipesScreen extends Screen {
 				fill(stack, tx,          ty + TAB_H-1, tx + tabW, ty + TAB_H,   C_TAB_BORD);
 				fill(stack, tx,          ty,           tx + 1,    ty + TAB_H,   C_TAB_BORD);
 				fill(stack, tx + tabW-1, ty,           tx + tabW, ty + TAB_H,   C_TAB_BORD);
-				drawCenteredString(stack, font, Component.translatable(ENCH_TAB_KEYS[i]),
-						tx + tabW / 2, ty + (TAB_H - font.lineHeight) / 2, 0xFFFFFF);
+				ScrollingText.drawCentered(stack, font, Component.translatable(ENCH_TAB_KEYS[i]),
+						tx, tx + tabW, ty + (TAB_H - font.lineHeight) / 2, 0xFFFFFF);
 			}
 		}
 	}
@@ -528,7 +535,8 @@ public class EnchantmentRecipesScreen extends Screen {
 			drawHint(stack, cx, py, ph, Component.translatable("endereyesgui.enchantments.detail.hint"));
 			return;
 		}
-		int ty = py + PAD;
+		// Desde aquí el contenido se recorta al panel y se puede desplazar con la rueda
+		int ty = py + PAD - detailScroll.begin(px, py, pw, ph, selectedEnch);
 		ItemStack book = buildBookStack(selectedEnch);
 		minecraft.getItemRenderer().renderAndDecorateFakeItem(book, px + PAD, ty);
 		hoveringResult = (mx >= px + PAD && mx < px + PAD + 16 && my >= ty && my < ty + 16);
@@ -593,6 +601,7 @@ public class EnchantmentRecipesScreen extends Screen {
 				}
 			}
 		}
+		detailScroll.contentEnd(ty);
 	}
 
 	// ── Panel pociones ────────────────────────────────────────────────────────
@@ -741,6 +750,7 @@ public class EnchantmentRecipesScreen extends Screen {
 
 	@Override
 	public boolean mouseScrolled(double mx, double my, double delta) {
+		if (!openPotions && detailScroll.scroll(mx, my, delta)) return true;
 		if (openPotions && mx > (int)(width * LIST_FRACTION) && selectedPotion != null) {
 			int ph = height - BOTTOM_H - (TITLE_H + 2);
 			potionPanelScroll = Math.max(0, Math.min((int)(potionPanelScroll - delta * 10), potionPanelContentHeight - ph + PAD * 2));
@@ -787,7 +797,13 @@ public class EnchantmentRecipesScreen extends Screen {
 		}
 		@Override public void render(@NotNull PoseStack stack, int mx, int my, float delta) {
 			fill(stack, 0, y0, getScrollbarPosition() + 6, y1, C_LIST_BG);
-			super.render(stack, mx, my, delta);
+			// Las filas que no caben del todo no se salen del recuadro de la lista
+			ListClip.begin(0, y0, getScrollbarPosition() + 6, y1);
+			try {
+				super.render(stack, mx, my, delta);
+			} finally {
+				ListClip.end();
+			}
 		}
 		@Override protected int getScrollbarPosition() { return this.width - 6; }
 		@Override public boolean isFocused() { return false; }
@@ -800,10 +816,14 @@ public class EnchantmentRecipesScreen extends Screen {
 			@Override public boolean mouseClicked(double mx, double my, int btn) { selectedEnch = data; RecipeList.this.setSelected(this); return true; }
 			@Override public void render(@NotNull PoseStack stack, int index, int top, int left, int width, int height, int mx, int my, boolean hovered, float delta) {
 				boolean sel = RecipeList.this.getSelected() == this;
-				if (sel)          fill(stack, left, top, left + width, top + height, C_SELECTED);
-				else if (hovered) fill(stack, left, top, left + width, top + height, C_HOVER);
+				if (sel)          fill(stack, left - 1, top - 1, left + width - 3, top + height + 1, C_SELECTED);
+				else if (hovered) fill(stack, left - 1, top - 1, left + width - 3, top + height + 1, C_HOVER);
 				String icon = data.isUnlocked() ? ICON_OK : ICON_ERR;
-				font.draw(stack, icon, left + 2, top + 2, data.isUnlocked() ? C_UNLOCKED : C_LOCKED);
+				// Faltan Ender Eyes: aunque se consiga el libro no se puede desbloquear todavía -> candado
+				if (!data.isUnlocked() && eyesEarned < data.getNeedEyes())
+					QuestLockInfo.drawLock(stack, left + 2, top + 1, font.lineHeight);
+				else
+					font.draw(stack, icon, left + 2, top + 2, data.isUnlocked() ? C_UNLOCKED : C_LOCKED);
 				font.draw(stack, font.plainSubstrByWidth(getEnchantmentName(data).getString(), width - font.width(icon) - 8),
 						left + 2 + font.width(icon), top + 2, data.isUnlocked() ? 0xEE88FF : 0x996699);
 			}
@@ -816,8 +836,8 @@ public class EnchantmentRecipesScreen extends Screen {
 			@Override public boolean mouseClicked(double mx, double my, int btn) { selectedPotion = data; potionPanelScroll = 0; RecipeList.this.setSelected(this); return true; }
 			@Override public void render(@NotNull PoseStack stack, int index, int top, int left, int width, int height, int mx, int my, boolean hovered, float delta) {
 				boolean sel = RecipeList.this.getSelected() == this;
-				if (sel)          fill(stack, left, top, left + width, top + height, C_SELECTED);
-				else if (hovered) fill(stack, left, top, left + width, top + height, C_HOVER);
+				if (sel)          fill(stack, left - 1, top - 1, left + width - 3, top + height + 1, C_SELECTED);
+				else if (hovered) fill(stack, left - 1, top - 1, left + width - 3, top + height + 1, C_HOVER);
 				String icon = data.isUnlocked() ? ICON_OK : ICON_ERR;
 				font.draw(stack, icon, left + 2, top + 2, data.isUnlocked() ? C_UNLOCKED : C_LOCKED);
 				String eid = data.getEffectId();

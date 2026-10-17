@@ -28,6 +28,8 @@ public class SimpleRecipesScreen extends Screen {
     private final List<SimpleRecipeData> recipes;
     private final String titleKey;
     private SimpleRecipeData selected = null;
+    /** Scroll del panel de detalle (cuando no cabe todo). */
+    private final PanelScroll detailScroll = new PanelScroll();
     private ItemStack jeiHoveredItem = ItemStack.EMPTY;
     private boolean hoveringResult = false;
 
@@ -61,6 +63,7 @@ public class SimpleRecipesScreen extends Screen {
     @Override
     protected void init() {
         super.init();
+        QuestLockInfo.clearCache();
         int listW   = (int) (width * LIST_FRACTION);
         int listTop = TITLE_H + 18;
         int listBot = height - BOTTOM_H;
@@ -95,6 +98,8 @@ public class SimpleRecipesScreen extends Screen {
                 width / 2, 6, 0xFFFFFF);
         recipeList.render(stack, mx, my, delta);
         renderDetailPanel(stack, mx, my);
+        // Lo que queda recortado fuera del panel no muestra tooltip
+        if (detailScroll.finish(stack) && !detailScroll.contains(mx, my)) { hoveredIngredient = null; hoveringResult = false; jeiHoveredItem = ItemStack.EMPTY; }
         super.render(stack, mx, my, delta);
         if (hoveredIngredient != null)
             renderTooltip(stack, hoveredIngredient, hoveredIngX, hoveredIngY);
@@ -106,6 +111,7 @@ public class SimpleRecipesScreen extends Screen {
     private int hoveredIngX, hoveredIngY;
 
     private void renderDetailPanel(PoseStack stack, int mx, int my) {
+        QuestLockInfo.reset();
         int listW = (int) (width * LIST_FRACTION);
         int px    = listW + PAD;
         int py    = TITLE_H + 2;
@@ -131,7 +137,8 @@ public class SimpleRecipesScreen extends Screen {
             return;
         }
 
-        int ty = py + PAD;
+        // Desde aquí el contenido se recorta al panel y se puede desplazar con la rueda
+        int ty = py + PAD - detailScroll.begin(px, py, pw, ph, selected);
 
         // ── Fila título: item + nombre ────────────────────────────────────────
         minecraft.getItemRenderer().renderAndDecorateFakeItem(selected.getResult(), px + PAD, ty);
@@ -167,6 +174,8 @@ public class SimpleRecipesScreen extends Screen {
             drawCenteredString(stack, font, s, cx, ty, 0xFFFFFF);
         }
         ty += font.lineHeight + 6;
+        // Receta bloqueada por una quest: cuál es (enlace que la abre) y qué le falta
+        if (!selected.isUnlocked()) ty = QuestLockInfo.render(stack, font, selected.getRecipeId(), cx, ty, pw - PAD * 2, mx, my);
 
         // ── Divisor ───────────────────────────────────────────────────────────
         fill(stack, px + PAD, ty, px + pw - PAD, ty + 1, C_DIVIDER);
@@ -223,6 +232,7 @@ public class SimpleRecipesScreen extends Screen {
                 ix += itemSize;
             }
         }
+        detailScroll.contentEnd(ty);
     }
 
     @Override
@@ -233,6 +243,20 @@ public class SimpleRecipesScreen extends Screen {
             if (JeiCompat.isShowUsagesKey(key))  { JeiCompat.showUsages(jeiHoveredItem);  return true; }
         }
         return super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    /** Clic en el enlace de la quest que desbloquea la receta. */
+    @Override
+    public boolean mouseClicked(double mx, double my, int btn) {
+        if (btn == 0 && detailScroll.contains(mx, my) && QuestLockInfo.click(mx, my, this)) return true;
+        return super.mouseClicked(mx, my, btn);
+    }
+
+    /** Rueda sobre el panel de detalle: lo desplaza si no cabe todo. */
+    @Override
+    public boolean mouseScrolled(double mx, double my, double delta) {
+        if (detailScroll.scroll(mx, my, delta)) return true;
+        return super.mouseScrolled(mx, my, delta);
     }
 
     @Override
@@ -256,7 +280,13 @@ public class SimpleRecipesScreen extends Screen {
         @Override
         public void render(@NotNull PoseStack stack, int mx, int my, float delta) {
             fill(stack, 0, y0, getScrollbarPosition() + 6, y1, C_LIST_BG);
-            super.render(stack, mx, my, delta);
+            // Las filas que no caben del todo no se salen del recuadro de la lista
+            ListClip.begin(0, y0, getScrollbarPosition() + 6, y1);
+            try {
+                super.render(stack, mx, my, delta);
+            } finally {
+                ListClip.end();
+            }
         }
 
         @Override protected int getScrollbarPosition() { return this.width - 6; }
@@ -277,11 +307,15 @@ public class SimpleRecipesScreen extends Screen {
             public void render(@NotNull PoseStack stack, int index, int top, int left,
                                int width, int height, int mx, int my, boolean hovered, float delta) {
                 boolean sel = RecipeList.this.getSelected() == this;
-                if (sel)          fill(stack, left, top, left + width, top + height, C_SELECTED);
-                else if (hovered) fill(stack, left, top, left + width, top + height, C_HOVER);
+                if (sel)          fill(stack, left - 1, top - 1, left + width - 3, top + height + 1, C_SELECTED);
+                else if (hovered) fill(stack, left - 1, top - 1, left + width - 3, top + height + 1, C_HOVER);
 
                 String icon = data.isUnlocked() ? ICON_OK : ICON_ERR;
-                font.drawShadow(stack, icon, left + 2, top + 2, data.isUnlocked() ? C_UNLOCKED : C_LOCKED);
+                // Bloqueada por una quest (o por lo que pide la quest: portal del Nether / End...): candado
+                if (!data.isUnlocked() && QuestLockInfo.isQuestLocked(data.getRecipeId()))
+                    QuestLockInfo.drawLock(stack, left + 2, top + 1, font.lineHeight);
+                else
+                    font.drawShadow(stack, icon, left + 2, top + 2, data.isUnlocked() ? C_UNLOCKED : C_LOCKED);
                 int nameX = left + 2 + font.width(icon);
                 // Limpiar códigos §X del nombre para forzar nuestro color
                 String rawName = net.minecraft.ChatFormatting.stripFormatting(

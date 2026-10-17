@@ -12,6 +12,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ArmorItem;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TieredItem;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -84,6 +85,34 @@ public class C2SRequestBlacksmithPacket {
 					new TypeToken<Map<String, Integer>>(){}.getType());
 		} catch (Exception e) { ITEM_TIERS = new HashMap<>(); }
 		return ITEM_TIERS;
+	}
+
+	/** Armas a distancia que no son arcos ni ballestas. */
+	private static final java.util.Set<String> RANGED_ITEMS = java.util.Set.of("alexsmobs:pocket_sand", "mutantmore:leafblower");
+
+	/** Objetos que se colocan en el Altar of Summoning: van en su propia sección del Blacksmith. */
+	private static final java.util.Set<String> SUMMON_ITEMS = java.util.Set.of(
+			"altar_of_summoning:duskkey", "altar_of_summoning:devilsante",
+			"altar_of_summoning:fossilbait", "altar_of_summoning:hauntedbell");
+
+	/**
+	 * Sección del Blacksmith en la que se muestra la receta. Las recetas solo tienen WEAPONS, ARMORS, TOOLS,
+	 * ARTIFACTS y OTHERS; aquí se separan:
+	 *  - WEAPONS -> SHIELDS (escudos) y RANGED (arcos y ballestas); el resto sigue en WEAPONS (armas cuerpo a cuerpo).
+	 *  - OTHERS -> SUMMON (objetos del Altar of Summoning).
+	 */
+	private static String displayCategory(String category, ItemStack result) {
+		Item item = result.getItem();
+		ResourceLocation id = ForgeRegistries.ITEMS.getKey(item);
+		String path = id == null ? "" : id.getPath();
+		if ("WEAPONS".equals(category)) {
+			if (item instanceof net.minecraft.world.item.ShieldItem || path.contains("shield")) return "SHIELDS";
+			if (item instanceof net.minecraft.world.item.ProjectileWeaponItem
+					|| path.endsWith("bow") || path.contains("crossbow")
+					|| (id != null && RANGED_ITEMS.contains(id.toString()))) return "RANGED";
+		}
+		if ("OTHERS".equals(category) && id != null && SUMMON_ITEMS.contains(id.toString())) return "SUMMON";
+		return category;
 	}
 
 	private static int getTierForItem(ResourceLocation itemId, int fallback) {
@@ -177,7 +206,7 @@ public class C2SRequestBlacksmithPacket {
 					ResourceLocation resultId = ForgeRegistries.ITEMS.getKey(bs.getResultItem().getItem());
 					dataList.add(buildData(
 							bs.getId(), bs.getResultItem(),
-							bs.getCategory().name(),
+							displayCategory(bs.getCategory().name(), bs.getResultItem()),
 							getTierForItem(resultId, bs.getTier()),
 							recipeBook.contains(bs.getId()),
 							ingredientsToStacks(bs.getIngredients()),
@@ -236,10 +265,19 @@ public class C2SRequestBlacksmithPacket {
 					boolean unlocked = variants.stream()
 							.anyMatch(bu -> recipeBook.contains(bu.getId()));
 
+					// Sin entrada en item_tiers.json: un nivel por encima de su base más alta (una mejora nunca es
+					// de menor rareza que el objeto que mejora). Antes salía Common.
+					int baseTier = -1;
+					for (ItemStack base : bases) {
+						ResourceLocation baseId = ForgeRegistries.ITEMS.getKey(base.getItem());
+						if (baseId != null) baseTier = Math.max(baseTier, getTierForItem(baseId, -1));
+					}
+					int fallbackTier = baseTier < 0 ? 0 : Math.min(5, baseTier + 1);
+
 					dataList.add(buildData(
 							first.getId(), first.getResultItem(),
-							first.getCategory().name(),
-							getTierForItem(resultId, 0),
+							displayCategory(first.getCategory().name(), first.getResultItem()),
+							getTierForItem(resultId, fallbackTier),
 							unlocked, commonIngs, bases
 					));
 				}

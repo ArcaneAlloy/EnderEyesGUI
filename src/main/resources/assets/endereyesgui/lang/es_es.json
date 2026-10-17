@@ -112,7 +112,7 @@
   "endereyesgui.enchantments.detail.eyes_obtained": "Ojos de Ender obtenidos: %s",
   "endereyesgui.blacksmith.button.tooltip": "Ver recetas de la Herrería",
   "endereyesgui.blacksmith.title": "Recetas de la Herrería",
-  "endereyesgui.blacksmith.category.weapons": "Armas",
+  "endereyesgui.blacksmith.category.weapons": "Armas cuerpo a cuerpo",
   "endereyesgui.blacksmith.category.armors": "Armaduras",
   "endereyesgui.blacksmith.category.tools": "Herramientas",
   "endereyesgui.blacksmith.category.others": "Otros",
@@ -191,5 +191,14 @@
   "endereyes.spectral.description.2": "Solo la magia puede herirlos; el acero no basta.",
   "endereyes.forbidden.name": "Ojo Prohibido",
   "endereyes.forbidden.description.1": "En las profundidades del Nether se alza un castillo de piglins más grande que cualquier Bastión conocido.",
-  "endereyes.forbidden.description.2": "En uno de sus cofres más recónditos aguarda, bien custodiado."
+  "endereyes.forbidden.description.2": "En uno de sus cofres más recónditos aguarda, bien custodiado.",
+  "endereyesgui.simple.hint": "Haz clic en una receta para ver su estado.",
+  "endereyesgui.matrix.capacity": "%s items",
+  "endereyesgui.matrix.tier0": "Tier 0 %s",
+  "endereyesgui.recipe.quest_lock": "Se desbloquea al completar la quest:",
+  "endereyesgui.recipe.quest_requires": "Esta quest se desbloquea cuando:",
+  "endereyesgui.recipe.quest_click": "Haz clic en la quest para abrirla",
+  "endereyesgui.blacksmith.category.ranged": "Armas a distancia",
+  "endereyesgui.blacksmith.category.shields": "Escudos",
+  "endereyesgui.blacksmith.category.summon": "Objetos de invocación"
 }

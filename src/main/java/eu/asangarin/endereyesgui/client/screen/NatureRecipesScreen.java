@@ -52,6 +52,8 @@ public class NatureRecipesScreen extends Screen {
     private EditBox searchBox;
     private String searchTerm = "";
     private SimpleRecipeData selected = null;
+    /** Scroll del panel de detalle (cuando no cabe todo). */
+    private final PanelScroll detailScroll = new PanelScroll();
     private ItemStack jeiHoveredItem = ItemStack.EMPTY;
     private boolean hoveringResult = false;
     private ItemStack hoveredIngredient = null;
@@ -70,6 +72,7 @@ public class NatureRecipesScreen extends Screen {
     @Override
     protected void init() {
         super.init();
+        QuestLockInfo.clearCache();
         int listW   = (int) (width * LIST_FRACTION);
         int listTop = TITLE_H + TAB_H + 18;
         int listBot = height - BOTTOM_H;
@@ -102,6 +105,7 @@ public class NatureRecipesScreen extends Screen {
 
     @Override
     public boolean mouseClicked(double mx, double my, int btn) {
+        if (btn == 0 && detailScroll.contains(mx, my) && QuestLockInfo.click(mx, my, this)) return true;
         int listW = (int) (width * LIST_FRACTION);
         int tabW  = listW / 2;
         int tabY  = TITLE_H + 2;
@@ -145,12 +149,14 @@ public class NatureRecipesScreen extends Screen {
             fill(stack, tx, tabY + TAB_H - 1, tx + tabW, tabY + TAB_H, C_TAB_BORD);
             fill(stack, tx, tabY, tx + 1, tabY + TAB_H, C_TAB_BORD);
             fill(stack, tx + tabW - 1, tabY, tx + tabW, tabY + TAB_H, C_TAB_BORD);
-            drawCenteredString(stack, font, Component.translatable(tabKeys[i]),
-                    tx + tabW / 2, tabY + (TAB_H - font.lineHeight) / 2, 0xFFFFFF);
+            ScrollingText.drawCentered(stack, font, Component.translatable(tabKeys[i]),
+                    tx, tx + tabW, tabY + (TAB_H - font.lineHeight) / 2, 0xFFFFFF);
         }
 
         recipeList.render(stack, mx, my, delta);
         renderDetailPanel(stack, mx, my);
+        // Lo que queda recortado fuera del panel no muestra tooltip
+        if (detailScroll.finish(stack) && !detailScroll.contains(mx, my)) { hoveredIngredient = null; hoveringResult = false; jeiHoveredItem = ItemStack.EMPTY; }
         super.render(stack, mx, my, delta);
 
         if (hoveredIngredient != null)
@@ -160,6 +166,7 @@ public class NatureRecipesScreen extends Screen {
     }
 
     private void renderDetailPanel(PoseStack stack, int mx, int my) {
+        QuestLockInfo.reset();
         int listW = (int) (width * LIST_FRACTION);
         int px = listW + PAD;
         int py = TITLE_H + 2;
@@ -183,7 +190,8 @@ public class NatureRecipesScreen extends Screen {
             return;
         }
 
-        int ty = py + PAD;
+        // Desde aquí el contenido se recorta al panel y se puede desplazar con la rueda
+        int ty = py + PAD - detailScroll.begin(px, py, pw, ph, selected);
 
         // Item resultado
         minecraft.getItemRenderer().renderAndDecorateFakeItem(selected.getResult(), px + PAD, ty);
@@ -226,6 +234,8 @@ public class NatureRecipesScreen extends Screen {
                     cx, ty, 0xFFFFFF);
         }
         ty += font.lineHeight + 8;
+        // Receta bloqueada por una quest: cuál es (enlace que la abre) y qué le falta
+        if (!selected.isUnlocked()) ty = QuestLockInfo.render(stack, font, selected.getRecipeId(), cx, ty, pw - PAD * 2, mx, my);
         fill(stack, px + PAD, ty, px + pw - PAD, ty + 1, C_DIVIDER); ty += 6;
 
         // Descripción de compás (Explorer)
@@ -273,6 +283,7 @@ public class NatureRecipesScreen extends Screen {
                 ix += 18;
             }
         }
+        detailScroll.contentEnd(ty);
     }
 
     @Override
@@ -283,6 +294,13 @@ public class NatureRecipesScreen extends Screen {
             if (JeiCompat.isShowUsagesKey(key))  { JeiCompat.showUsages(jeiHoveredItem);  return true; }
         }
         return super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    /** Rueda sobre el panel de detalle: lo desplaza si no cabe todo. */
+    @Override
+    public boolean mouseScrolled(double mx, double my, double delta) {
+        if (detailScroll.scroll(mx, my, delta)) return true;
+        return super.mouseScrolled(mx, my, delta);
     }
 
     @Override public boolean isPauseScreen() { return false; }
@@ -305,7 +323,13 @@ public class NatureRecipesScreen extends Screen {
         @Override
         public void render(@NotNull PoseStack stack, int mx, int my, float delta) {
             fill(stack, 0, y0, getScrollbarPosition() + 6, y1, C_LIST_BG);
-            super.render(stack, mx, my, delta);
+            // Las filas que no caben del todo no se salen del recuadro de la lista
+            ListClip.begin(0, y0, getScrollbarPosition() + 6, y1);
+            try {
+                super.render(stack, mx, my, delta);
+            } finally {
+                ListClip.end();
+            }
         }
 
         @Override protected int getScrollbarPosition() { return this.width - 6; }
@@ -326,10 +350,14 @@ public class NatureRecipesScreen extends Screen {
             public void render(@NotNull PoseStack stack, int index, int top, int left,
                                int width, int height, int mx, int my, boolean hovered, float delta) {
                 boolean sel = RecipeList.this.getSelected() == this;
-                if (sel)          fill(stack, left, top, left + width, top + height, C_SELECTED);
-                else if (hovered) fill(stack, left, top, left + width, top + height, C_HOVER);
+                if (sel)          fill(stack, left - 1, top - 1, left + width - 3, top + height + 1, C_SELECTED);
+                else if (hovered) fill(stack, left - 1, top - 1, left + width - 3, top + height + 1, C_HOVER);
                 String icon = data.isUnlocked() ? ICON_OK : ICON_ERR;
-                font.drawShadow(stack, icon, left + 2, top + 2, data.isUnlocked() ? C_UNLOCKED : C_LOCKED);
+                // Bloqueada por una quest (o por lo que pide la quest: portal del Nether / End...): candado
+                if (!data.isUnlocked() && QuestLockInfo.isQuestLocked(data.getRecipeId()))
+                    QuestLockInfo.drawLock(stack, left + 2, top + 1, font.lineHeight);
+                else
+                    font.drawShadow(stack, icon, left + 2, top + 2, data.isUnlocked() ? C_UNLOCKED : C_LOCKED);
                 int nameX = left + 2 + font.width(icon);
                 String rawName = net.minecraft.ChatFormatting.stripFormatting(
                         data.getResult().getHoverName().getString());

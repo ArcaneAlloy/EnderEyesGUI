@@ -21,7 +21,11 @@ import java.util.stream.Collectors;
 
 public class BlacksmithRecipesScreen extends Screen {
 
-	private static final List<String> CATEGORY_ORDER = List.of("WEAPONS", "ARMORS", "TOOLS", "ARTIFACTS", "OTHERS");
+	/** Secciones (ver C2SRequestBlacksmithPacket.displayCategory). WEAPONS se muestra como "Melee Weapons". */
+	private static final List<String> CATEGORY_ORDER = List.of("WEAPONS", "RANGED", "SHIELDS", "ARMORS",
+			"TOOLS", "ARTIFACTS", "SUMMON", "OTHERS");
+	/** Pestañas por fila (dos filas). */
+	private static final int TABS_PER_ROW = 4;
 
 	private final List<BlacksmithRecipeData> allRecipes;
 	private String activeCategory = "WEAPONS";
@@ -30,6 +34,8 @@ public class BlacksmithRecipesScreen extends Screen {
 	private static final float LIST_FRACTION = 0.50f;
 	private static final int   TITLE_H       = 20;
 	private static final int   TAB_H         = 18;
+	/** Alto de las dos filas de pestañas. */
+	private static final int   TABS_H        = TAB_H * 2;
 	private static final int   BOTTOM_H      = 28;
 	private static final int   PAD           = 8;
 
@@ -60,6 +66,8 @@ public class BlacksmithRecipesScreen extends Screen {
 	// Item bajo el cursor (para integración JEI)
 	private ItemStack hoveredIngredient = null;
 	private int hoveredIngX, hoveredIngY;
+	/** Scroll del panel de detalle (cuando no cabe todo). */
+	private final PanelScroll detailScroll = new PanelScroll();
 	private ItemStack jeiHoveredItem = ItemStack.EMPTY;
 	private boolean hoveringResult = false;
 
@@ -71,17 +79,18 @@ public class BlacksmithRecipesScreen extends Screen {
 	@Override
 	protected void init() {
 		super.init();
+		QuestLockInfo.clearCache();
 		tabButtons.clear();
 		int listW   = (int) (width * LIST_FRACTION);
-		int listTop = TITLE_H + TAB_H + 18;
+		int listTop = TITLE_H + TABS_H + 18;
 		int listBot = height - BOTTOM_H;
-		int tabW    = listW / CATEGORY_ORDER.size();
+		int tabW    = listW / TABS_PER_ROW;
 		int tabY    = TITLE_H + 2;
 
 		for (int i = 0; i < CATEGORY_ORDER.size(); i++) {
 			String cat = CATEGORY_ORDER.get(i);
 			int idx = i;
-			Button tab = new Button(idx * tabW, tabY, tabW, TAB_H,
+			Button tab = ScrollingText.button((idx % TABS_PER_ROW) * tabW, tabY + (idx / TABS_PER_ROW) * TAB_H, tabW, TAB_H,
 					Component.translatable("endereyesgui.blacksmith.category." + cat.toLowerCase()),
 					btn -> { activeCategory = cat; selected = null;
 						rebuildList(listW, listTop, listBot); });
@@ -89,7 +98,7 @@ public class BlacksmithRecipesScreen extends Screen {
 			tabButtons.add(tab);
 		}
 
-		searchBox = new EditBox(font, 2, TITLE_H + TAB_H + 4, listW - 4, 14,
+		searchBox = new EditBox(font, 2, TITLE_H + TABS_H + 4, listW - 4, 14,
 				Component.translatable("endereyesgui.search"));
 		searchBox.setMaxLength(50);
 		searchBox.setResponder(text -> {
@@ -139,11 +148,11 @@ public class BlacksmithRecipesScreen extends Screen {
 				Component.translatable("endereyesgui.blacksmith.title"), width / 2, 6, 0xFFFFFF);
 
 		int listW = (int) (width * LIST_FRACTION);
-		int tabW  = listW / CATEGORY_ORDER.size();
-		int tabY  = TITLE_H + 2;
+		int tabW  = listW / TABS_PER_ROW;
 		for (int i = 0; i < CATEGORY_ORDER.size(); i++) {
 			String cat = CATEGORY_ORDER.get(i);
-			int tx = i * tabW;
+			int tx = (i % TABS_PER_ROW) * tabW;
+			int tabY = TITLE_H + 2 + (i / TABS_PER_ROW) * TAB_H;
 			fill(stack, tx, tabY, tx + tabW, tabY + TAB_H,
 					cat.equals(activeCategory) ? C_TAB_ACTIVE : C_TAB_IDLE);
 			fill(stack, tx, tabY, tx + tabW, tabY + 1, C_TAB_BORD);
@@ -154,6 +163,8 @@ public class BlacksmithRecipesScreen extends Screen {
 
 		recipeList.render(stack, mx, my, delta);
 		renderDetailPanel(stack, mx, my);
+		// Lo que queda recortado fuera del panel no muestra tooltip
+		if (detailScroll.finish(stack) && !detailScroll.contains(mx, my)) { hoveredIngredient = null; hoveringResult = false; jeiHoveredItem = ItemStack.EMPTY; }
 
 		super.render(stack, mx, my, delta);
 
@@ -168,6 +179,7 @@ public class BlacksmithRecipesScreen extends Screen {
 	// ── Panel detalle ─────────────────────────────────────────────────────────
 
 	private void renderDetailPanel(PoseStack stack, int mx, int my) {
+		QuestLockInfo.reset();
 		int listW = (int) (width * LIST_FRACTION);
 		int px    = listW + PAD;
 		int py    = TITLE_H + 2;
@@ -194,7 +206,8 @@ public class BlacksmithRecipesScreen extends Screen {
 			return;
 		}
 
-		int ty = py + PAD;
+		// Desde aquí el contenido se recorta al panel y se puede desplazar con la rueda
+		int ty = py + PAD - detailScroll.begin(px, py, pw, ph, selected);
 
 		// ── Fila título: item + nombre ────────────────────────────────────────
 		minecraft.getItemRenderer().renderAndDecorateFakeItem(selected.getResult(), px + PAD, ty);
@@ -230,6 +243,8 @@ public class BlacksmithRecipesScreen extends Screen {
 			drawCenteredString(stack, font, s, cx, ty, 0xFFFFFF);
 		}
 		ty += font.lineHeight + 6;
+		// Receta bloqueada por una quest: cuál es (enlace que la abre) y qué le falta
+		if (!selected.isUnlocked()) ty = QuestLockInfo.render(stack, font, selected.getRecipeId(), cx, ty, pw - PAD * 2, mx, my);
 
 		// ── Divisor ───────────────────────────────────────────────────────────
 		fill(stack, px + PAD, ty, px + pw - PAD, ty + 1, C_DIVIDER);
@@ -261,6 +276,7 @@ public class BlacksmithRecipesScreen extends Screen {
 					selected.getIngredients(),
 					Component.translatable("endereyesgui.blacksmith.ingredients"));
 		}
+		detailScroll.contentEnd(ty);
 	}
 
 	private int renderStats(PoseStack stack, int px, int ty, int pw, int cx) {
@@ -282,7 +298,8 @@ public class BlacksmithRecipesScreen extends Screen {
 						String.format("%.1f", selected.getArmorToughness()));
 			}
 
-		} else if ("WEAPONS".equals(cat)) {
+		} else if ("WEAPONS".equals(cat) || "RANGED".equals(cat) || "SHIELDS".equals(cat)) {
+			// Armas cuerpo a cuerpo, a distancia y escudos: solo salen los stats que tenga cada una
 			if (selected.getDurability() > 0)
 				ty = renderStat(stack, px, ty, pw,
 						Component.translatable("endereyesgui.blacksmith.stat.durability"),
@@ -407,6 +424,20 @@ public class BlacksmithRecipesScreen extends Screen {
 		return super.keyPressed(keyCode, scanCode, modifiers);
 	}
 
+	/** Clic en el enlace de la quest que desbloquea la receta. */
+	@Override
+	public boolean mouseClicked(double mx, double my, int btn) {
+		if (btn == 0 && detailScroll.contains(mx, my) && QuestLockInfo.click(mx, my, this)) return true;
+		return super.mouseClicked(mx, my, btn);
+	}
+
+	/** Rueda sobre el panel de detalle: lo desplaza si no cabe todo. */
+	@Override
+	public boolean mouseScrolled(double mx, double my, double delta) {
+		if (detailScroll.scroll(mx, my, delta)) return true;
+		return super.mouseScrolled(mx, my, delta);
+	}
+
 	@Override
 	public boolean isPauseScreen() { return false; }
 
@@ -436,7 +467,13 @@ public class BlacksmithRecipesScreen extends Screen {
 		@Override
 		public void render(@NotNull PoseStack stack, int mx, int my, float delta) {
 			fill(stack, 0, y0, getScrollbarPosition() + 6, y1, C_LIST_BG);
-			super.render(stack, mx, my, delta);
+			// Las filas que no caben del todo no se salen del recuadro de la lista
+			ListClip.begin(0, y0, getScrollbarPosition() + 6, y1);
+			try {
+				super.render(stack, mx, my, delta);
+			} finally {
+				ListClip.end();
+			}
 		}
 
 		@Override protected int getScrollbarPosition() { return this.width - 6; }
@@ -486,11 +523,15 @@ public class BlacksmithRecipesScreen extends Screen {
 			public void render(@NotNull PoseStack stack, int index, int top, int left,
 							   int width, int height, int mx, int my, boolean hovered, float delta) {
 				boolean sel = RecipeList.this.getSelected() == this;
-				if (sel)          fill(stack, left, top, left + width, top + height, C_SELECTED);
-				else if (hovered) fill(stack, left, top, left + width, top + height, C_HOVER);
+				if (sel)          fill(stack, left - 1, top - 1, left + width - 3, top + height + 1, C_SELECTED);
+				else if (hovered) fill(stack, left - 1, top - 1, left + width - 3, top + height + 1, C_HOVER);
 
 				String icon = data.isUnlocked() ? ICON_OK : ICON_ERR;
-				font.draw(stack, icon, left + 2, top + 2,
+				// Bloqueada por una quest (o por lo que pide la quest: portal del Nether / End...): candado
+				if (!data.isUnlocked() && QuestLockInfo.isQuestLocked(data.getRecipeId()))
+					QuestLockInfo.drawLock(stack, left + 2, top + 1, font.lineHeight);
+				else
+					font.draw(stack, icon, left + 2, top + 2,
 						data.isUnlocked() ? C_UNLOCKED : C_LOCKED);
 				int nameX = left + 2 + font.width(icon);
 				font.draw(stack, font.plainSubstrByWidth(

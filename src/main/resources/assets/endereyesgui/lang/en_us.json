@@ -112,7 +112,7 @@
   "endereyesgui.enchantments.detail.eyes_obtained": "Ender Eyes obtained: %s",
   "endereyesgui.blacksmith.button.tooltip": "View Blacksmith recipes",
   "endereyesgui.blacksmith.title": "Blacksmith Recipes",
-  "endereyesgui.blacksmith.category.weapons": "Weapons",
+  "endereyesgui.blacksmith.category.weapons": "Melee Weapons",
   "endereyesgui.blacksmith.category.armors": "Armors",
   "endereyesgui.blacksmith.category.tools": "Tools",
   "endereyesgui.blacksmith.category.others": "Others",
@@ -191,5 +191,14 @@
   "endereyes.spectral.description.2": "Only magic can harm them; steel alone will not do.",
   "endereyes.forbidden.name": "Forbidden Eye",
   "endereyes.forbidden.description.1": "Deep in the Nether rises a piglin castle larger than any known Bastion.",
-  "endereyes.forbidden.description.2": "In one of its deepest chests, it waits, well guarded."
+  "endereyes.forbidden.description.2": "In one of its deepest chests, it waits, well guarded.",
+  "endereyesgui.simple.hint": "Click a recipe to see its status.",
+  "endereyesgui.matrix.capacity": "%s items",
+  "endereyesgui.matrix.tier0": "Tier 0 %s",
+  "endereyesgui.recipe.quest_lock": "Unlocked by completing the quest:",
+  "endereyesgui.recipe.quest_requires": "This quest unlocks when:",
+  "endereyesgui.recipe.quest_click": "Click the quest to open it",
+  "endereyesgui.blacksmith.category.ranged": "Ranged Weapons",
+  "endereyesgui.blacksmith.category.shields": "Shields",
+  "endereyesgui.blacksmith.category.summon": "Summon Items"
 }
