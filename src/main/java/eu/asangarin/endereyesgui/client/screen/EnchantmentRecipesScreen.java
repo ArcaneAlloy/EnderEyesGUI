@@ -626,9 +626,12 @@ public class EnchantmentRecipesScreen extends Screen {
 		net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
 		double guiScale = mc.getWindow().getGuiScale();
 		int screenH = mc.getWindow().getHeight();
+		// Zona visible: dentro del borde. Lo que no cabe entero no se dibuja (nada de iconos cortados)
+		potClipTop = py + 2;
+		potClipBottom = py + ph - 2;
 		com.mojang.blaze3d.systems.RenderSystem.enableScissor(
-				(int)(px * guiScale), (int)(screenH - (py + ph) * guiScale),
-				(int)(pw * guiScale), (int)(ph * guiScale));
+				(int)(px * guiScale), (int)(screenH - potClipBottom * guiScale),
+				(int)(pw * guiScale), (int)((potClipBottom - potClipTop) * guiScale));
 
 		int ty = py + PAD - potionPanelScroll;
 		ItemStack base = selectedPotion.getBasePotion();
@@ -643,7 +646,7 @@ public class EnchantmentRecipesScreen extends Screen {
 			}
 			if (base.isEmpty()) base = new ItemStack(Items.POTION);
 		}
-		if (!base.isEmpty()) {
+		if (!base.isEmpty() && potVisible(ty, 16)) {
 			minecraft.getItemRenderer().renderAndDecorateFakeItem(base, px + PAD, ty);
 			hoveringResult = (mx >= px + PAD && mx < px + PAD + 16 && my >= ty && my < ty + 16);
 			if (hoveringResult) jeiHoveredItem = base;
@@ -666,6 +669,7 @@ public class EnchantmentRecipesScreen extends Screen {
 		fill(stack, px + PAD, ty, px + pw - PAD, ty + 1, C_DIVIDER); ty += 6;
 
 		net.minecraft.world.item.alchemy.Potion pot = net.minecraft.world.item.alchemy.PotionUtils.getPotion(base);
+		ty = renderEffectDescriptions(stack, px, ty, pw, pot, selectedPotion.getEffectId());
 		ItemStack splashPotion    = net.minecraft.world.item.alchemy.PotionUtils.setPotion(new ItemStack(Items.SPLASH_POTION), pot);
 		ItemStack lingeringPotion = net.minecraft.world.item.alchemy.PotionUtils.setPotion(new ItemStack(Items.LINGERING_POTION), pot);
 		ItemStack baseIng = selectedPotion.getIngredient();
@@ -706,12 +710,100 @@ public class EnchantmentRecipesScreen extends Screen {
 			int trackX = px + pw - 6, trackY = py + 4, trackH = ph - 8;
 			fill(stack, trackX, trackY, trackX + 3, trackY + trackH, 0x33FFFFFF);
 			int thumbH = Math.max(10, trackH * ph / potionPanelContentHeight);
-			int thumbY = trackY + (potionPanelScroll * (trackH - thumbH) / Math.max(1, potionPanelContentHeight - ph));
+			// Mismo máximo que el scroll con la rueda; el pulgar nunca sale de la pista
+			int maxScroll = Math.max(1, potionPanelContentHeight - ph + PAD * 2);
+			int thumbY = trackY + (Math.min(potionPanelScroll, maxScroll) * (trackH - thumbH) / maxScroll);
+			thumbY = Math.max(trackY, Math.min(thumbY, trackY + trackH - thumbH));
 			fill(stack, trackX, thumbY, trackX + 3, thumbY + thumbH, 0xBB8800CC);
 		}
 	}
 
+	/**
+	 * Descripción de los efectos de la poción, con las mismas claves que Just Enough Effect Descriptions
+	 * ("effect.<mod>.<efecto>.description"). Si no hay descripción para ningún efecto, no dibuja nada.
+	 */
+	private int renderEffectDescriptions(PoseStack stack, int px, int ty, int pw, net.minecraft.world.item.alchemy.Potion pot, String potionId) {
+		java.util.Set<net.minecraft.world.effect.MobEffect> seen = new java.util.LinkedHashSet<>();
+		if (pot != null) for (net.minecraft.world.effect.MobEffectInstance inst : pot.getEffects()) seen.add(inst.getEffect());
+		// Pociones de otros mods: si la poción no se resuelve en el cliente, se busca el efecto con el mismo id
+		if (seen.isEmpty()) seen.addAll(effectsFromId(potionId));
+		boolean drawn = false;
+		for (net.minecraft.world.effect.MobEffect effect : seen) {
+			String key = effectDescriptionKey(effect);
+			if (key == null) continue;
+			if (seen.size() > 1) {
+				font.draw(stack, effect.getDisplayName().copy().withStyle(ChatFormatting.LIGHT_PURPLE), px + PAD, ty, 0xFFFFFF);
+				ty += font.lineHeight + 2;
+			}
+			for (FormattedCharSequence line : font.split(Component.translatable(key).withStyle(ChatFormatting.GRAY), pw - PAD * 2 - 6)) {
+				if (potVisible(ty, font.lineHeight)) font.draw(stack, line, px + PAD, ty, 0xFFFFFF);
+				ty += font.lineHeight + 1;
+			}
+			ty += 4;
+			drawn = true;
+		}
+		if (drawn) {
+			ty += 2;
+			fill(stack, px + PAD, ty, px + pw - PAD, ty + 1, C_DIVIDER);
+			ty += 6;
+		}
+		return ty;
+	}
+
+	/**
+	 * Clave de la descripción del efecto. JEED y los mods usan el nombre de registro ("effect.alexsmobs.bug_pheromones
+	 * .description"), que no siempre coincide con getDescriptionId (Alex's Mobs usa "alexsmobs.potion.bug_pheromones").
+	 */
+	@org.jetbrains.annotations.Nullable
+	private static String effectDescriptionKey(net.minecraft.world.effect.MobEffect effect) {
+		java.util.List<String> keys = new java.util.ArrayList<>();
+		net.minecraft.resources.ResourceLocation id = net.minecraftforge.registries.ForgeRegistries.MOB_EFFECTS.getKey(effect);
+		if (id != null) keys.add("effect." + id.getNamespace() + "." + id.getPath() + ".description");
+		keys.add(effect.getDescriptionId() + ".description");
+		keys.add(effect.getDescriptionId() + ".desc");
+		for (String k : keys) if (net.minecraft.client.resources.language.I18n.exists(k)) return k;
+		return null;
+	}
+
+	/**
+	 * Efectos de una poción a partir de su id ("alexsmobs:bug_pheromones", "minecraft:long_poison"...): primero la
+	 * poción registrada con ese id o sin el prefijo long_/strong_; si no, el efecto con ese mismo nombre.
+	 */
+	private static java.util.List<net.minecraft.world.effect.MobEffect> effectsFromId(String potionId) {
+		java.util.List<net.minecraft.world.effect.MobEffect> out = new java.util.ArrayList<>();
+		net.minecraft.resources.ResourceLocation id = potionId == null ? null : net.minecraft.resources.ResourceLocation.tryParse(potionId);
+		if (id == null) return out;
+		String path = id.getPath();
+		java.util.List<String> names = new java.util.ArrayList<>();
+		names.add(path);
+		for (String p : new String[]{"long_", "strong_"}) if (path.startsWith(p)) names.add(path.substring(p.length()));
+		for (String sfx : new String[]{"_long", "_strong", "_potion"}) if (path.endsWith(sfx)) names.add(path.substring(0, path.length() - sfx.length()));
+		for (String name : names) {
+			net.minecraft.resources.ResourceLocation rl = new net.minecraft.resources.ResourceLocation(id.getNamespace(), name);
+			net.minecraft.world.item.alchemy.Potion p = net.minecraftforge.registries.ForgeRegistries.POTIONS.getValue(rl);
+			if (p != null && !p.getEffects().isEmpty()) {
+				for (net.minecraft.world.effect.MobEffectInstance inst : p.getEffects()) if (!out.contains(inst.getEffect())) out.add(inst.getEffect());
+				return out;
+			}
+			net.minecraft.world.effect.MobEffect e = net.minecraftforge.registries.ForgeRegistries.MOB_EFFECTS.getValue(rl);
+			if (e != null) {
+				out.add(e);
+				return out;
+			}
+		}
+		return out;
+	}
+
+	/** Límites de la zona visible del panel de pociones (se fijan en cada frame). */
+	private int potClipTop, potClipBottom = Integer.MAX_VALUE;
+
+	/** ¿Cabe entero en la zona visible del panel de pociones algo de altura h que empieza en y? */
+	private boolean potVisible(int y, int h) {
+		return y >= potClipTop && y + h <= potClipBottom;
+	}
+
 	private int renderVariantRow(PoseStack stack, int mx, int my, int px, int ty, int pw, ItemStack potion, String labelKey, ItemStack[] ingredients) {
+		if (!potVisible(ty, 16)) return ty + 18;
 		if (!potion.isEmpty()) {
 			minecraft.getItemRenderer().renderAndDecorateFakeItem(potion, px + PAD, ty);
 			minecraft.getItemRenderer().renderGuiItemDecorations(font, potion, px + PAD, ty);

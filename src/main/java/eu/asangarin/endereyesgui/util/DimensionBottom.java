@@ -44,8 +44,9 @@ public enum DimensionBottom implements IBottom {
 		return active ? activeIcon : inactiveIcon;
 	}
 
+	/** Las dimensiones no tienen dificultad: no se muestra en su pantalla de detalle. */
 	public EnderEyeDifficult getDifficult() {
-		return difficult;
+		return null;
 	}
 
 	public static DimensionBottom[] getValues() {
