@@ -14,6 +14,8 @@ public class EnderEyeInspectScreen extends Screen {
 	private final IBottom eye;
 
 	private int scaledWidth, scaledHeight;
+	/** Botón "Volver": se recoloca debajo de la quest y sus requisitos, que ocupan un alto variable. */
+	private Button backButton;
 
 	/** Quest de BTE Mobs que abre el portal del Twilight Forest. */
 	private static final String TWILIGHT_QUEST = "bte_mobs:noah_infested_temple";
@@ -50,7 +52,7 @@ public class EnderEyeInspectScreen extends Screen {
 		addRenderableWidget(new EnderEyeIcon(scaledWidth, scaledHeight, eye.getIconTexture(unlocked)));
 		// La quest y sus requisitos ocupan más que la descripción: el botón va más abajo
 		int backY = quest() != null ? Math.min(height - 24, scaledHeight + 100) : scaledHeight + 80;
-		addRenderableWidget(new Button(scaledWidth - 30, backY, 60, 20, Component.translatable("gui.back"), (button) -> Networking.requestEnderGUI()));
+		backButton = addRenderableWidget(new Button(scaledWidth - 30, backY, 60, 20, Component.translatable("gui.back"), (button) -> Networking.requestEnderGUI()));
 	}
 
 	@Override
@@ -60,13 +62,18 @@ public class EnderEyeInspectScreen extends Screen {
 		renderDifficulty(stack);
 		String[] quest = quest();
 		if (quest != null) {
-			// Quest que lleva al ojo / abre el portal, como enlace (o censurada si aún no se puede ver) y sus requisitos
+			// Quest que lleva al ojo / abre el portal, como enlace (o censurada si aún no se puede ver) y sus requisitos.
+			// Los ojos tienen debajo del icono la dificultad en grande: la quest empieza debajo de ella.
 			QuestLockInfo.reset();
-			int startY = scaledHeight + 4;
+			int startY = eye.getDifficult() != null ? scaledHeight + 36 : scaledHeight + 4;
 			int endY = QuestLockInfo.renderQuest(stack, this.font, quest[0],
 					Component.translatable(quest[1]), scaledWidth, startY,
 					Math.min(width - 40, 320), x, y);
-			if (endY != startY) return;
+			if (endY != startY) {
+				// El botón "Volver" justo debajo de lo dibujado, sin salirse de la pantalla
+				if (backButton != null) backButton.y = Math.max(scaledHeight + 80, Math.min(height - 24, endY + 6));
+				return;
+			}
 		}
 		drawCenteredString(stack, this.font, Component.translatable(eye.getDescriptionKey(1)), scaledWidth, scaledHeight + 40, 0xFFFFFF);
 		drawCenteredString(stack, this.font, Component.translatable(eye.getDescriptionKey(2)), scaledWidth, scaledHeight + 52, 0xFFFFFF);
