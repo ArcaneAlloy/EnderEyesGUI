@@ -75,8 +75,17 @@ public class EnderEyeInspectScreen extends Screen {
 				return;
 			}
 		}
-		drawCenteredString(stack, this.font, Component.translatable(eye.getDescriptionKey(1)), scaledWidth, scaledHeight + 40, 0xFFFFFF);
-		drawCenteredString(stack, this.font, Component.translatable(eye.getDescriptionKey(2)), scaledWidth, scaledHeight + 52, 0xFFFFFF);
+		// Descripción: cada línea se parte en varias si no cabe en el ancho de la pantalla (si no, se cortaba por los lados)
+		int maxWidth = Math.min(width - 40, 320);
+		int lineY = scaledHeight + 40;
+		for (int i = 1; i <= 2; i++) {
+			for (net.minecraft.util.FormattedCharSequence line : this.font.split(Component.translatable(eye.getDescriptionKey(i)), maxWidth)) {
+				this.font.drawShadow(stack, line, scaledWidth - this.font.width(line) / 2.0F, lineY, 0xFFFFFF);
+				lineY += this.font.lineHeight + 3;
+			}
+		}
+		// El botón "Volver" debajo de la descripción, sin salirse de la pantalla
+		if (backButton != null) backButton.y = Math.max(scaledHeight + 80, Math.min(height - 24, lineY + 8));
 	}
 
 	@Override
