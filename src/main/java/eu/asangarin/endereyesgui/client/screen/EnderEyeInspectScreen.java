@@ -75,8 +75,9 @@ public class EnderEyeInspectScreen extends Screen {
 				return;
 			}
 		}
-		// Descripción: cada línea se parte en varias si no cabe en el ancho de la pantalla (si no, se cortaba por los lados)
-		int maxWidth = Math.min(width - 40, 320);
+		// Descripción: cada línea solo se parte si no cabe en el ancho de la pantalla (si no, se cortaba por los lados);
+		// si hay sitio se queda en una línea, como antes
+		int maxWidth = width - 40;
 		int lineY = scaledHeight + 40;
 		for (int i = 1; i <= 2; i++) {
 			for (net.minecraft.util.FormattedCharSequence line : this.font.split(Component.translatable(eye.getDescriptionKey(i)), maxWidth)) {
