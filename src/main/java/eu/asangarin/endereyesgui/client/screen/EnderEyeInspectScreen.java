@@ -18,8 +18,21 @@ public class EnderEyeInspectScreen extends Screen {
 	/** Quest de BTE Mobs que abre el portal del Twilight Forest. */
 	private static final String TWILIGHT_QUEST = "bte_mobs:noah_infested_temple";
 
-	private boolean isTwilight() {
-		return eye == eu.asangarin.endereyesgui.util.DimensionBottom.TWILIGHT_FOREST;
+	/**
+	 * Quest de BTE Mobs que lleva a cada ojo (o al portal del Twilight Forest) y la cabecera que la presenta.
+	 * Se muestra como enlace en lugar de la descripción fija, con sus requisitos; las quests previas que ya se
+	 * pueden ver también son enlaces.
+	 */
+	private static final java.util.Map<IBottom, String[]> QUESTS = java.util.Map.of(
+			eu.asangarin.endereyesgui.util.DimensionBottom.TWILIGHT_FOREST, new String[]{TWILIGHT_QUEST, "endereyesgui.twilight.quest_lock"},
+			eu.asangarin.endereyesgui.util.EnderEye.CURSED, new String[]{"bte_mobs:noah_cursed_eye", "endereyesgui.eye.cursed.quest_lock"},
+			eu.asangarin.endereyesgui.util.EnderEye.EVIL, new String[]{"bte_mobs:antonio_save_village", "endereyesgui.eye.evil.quest_lock"},
+			eu.asangarin.endereyesgui.util.EnderEye.SCULK, new String[]{"bte_mobs:noah_warden", "endereyesgui.eye.sculk.quest_lock"});
+
+	/** Quest de este ojo / dimensión y su cabecera, o null si no tiene. */
+	@org.jetbrains.annotations.Nullable
+	private String[] quest() {
+		return QUESTS.get(eye);
 	}
 
 	protected EnderEyeInspectScreen(IBottom eye, boolean unlocked) {
@@ -35,8 +48,8 @@ public class EnderEyeInspectScreen extends Screen {
 		scaledWidth = width / 2;
 		scaledHeight = height / 2;
 		addRenderableWidget(new EnderEyeIcon(scaledWidth, scaledHeight, eye.getIconTexture(unlocked)));
-		// En el Twilight Forest la quest y sus requisitos ocupan más: el botón va más abajo
-		int backY = isTwilight() ? Math.min(height - 24, scaledHeight + 100) : scaledHeight + 80;
+		// La quest y sus requisitos ocupan más que la descripción: el botón va más abajo
+		int backY = quest() != null ? Math.min(height - 24, scaledHeight + 100) : scaledHeight + 80;
 		addRenderableWidget(new Button(scaledWidth - 30, backY, 60, 20, Component.translatable("gui.back"), (button) -> Networking.requestEnderGUI()));
 	}
 
@@ -45,12 +58,13 @@ public class EnderEyeInspectScreen extends Screen {
 		this.renderBackground(stack);
 		super.render(stack, x, y, delta);
 		renderDifficulty(stack);
-		if (isTwilight()) {
-			// Quest que abre el portal, como enlace (o censurada si aún no se puede ver) y sus requisitos
+		String[] quest = quest();
+		if (quest != null) {
+			// Quest que lleva al ojo / abre el portal, como enlace (o censurada si aún no se puede ver) y sus requisitos
 			QuestLockInfo.reset();
 			int startY = scaledHeight + 4;
-			int endY = QuestLockInfo.renderQuest(stack, this.font, TWILIGHT_QUEST,
-					Component.translatable("endereyesgui.twilight.quest_lock"), scaledWidth, startY,
+			int endY = QuestLockInfo.renderQuest(stack, this.font, quest[0],
+					Component.translatable(quest[1]), scaledWidth, startY,
 					Math.min(width - 40, 320), x, y);
 			if (endY != startY) return;
 		}
@@ -60,7 +74,7 @@ public class EnderEyeInspectScreen extends Screen {
 
 	@Override
 	public boolean mouseClicked(double mx, double my, int button) {
-		if (isTwilight() && button == 0 && QuestLockInfo.click(mx, my, this)) return true;
+		if (quest() != null && button == 0 && QuestLockInfo.click(mx, my, this)) return true;
 		return super.mouseClicked(mx, my, button);
 	}
 

@@ -38,10 +38,11 @@ final class QuestLockInfo {
     @Nullable
     private static Method parentQuests;
 
-    /** Enlace dibujado en el último frame (para el clic). */
-    private static int linkX0, linkY0, linkX1, linkY1;
-    @Nullable
-    private static String linkQuest;
+    /** Enlace a una quest dibujado en el último frame (zona clicable). */
+    private record Link(String quest, int x0, int y0, int x1, int y1) {}
+
+    /** Enlaces dibujados en el último frame (para el clic): la quest y las quests previas visibles. */
+    private static final List<Link> LINKS = new java.util.ArrayList<>();
 
     private static boolean lookup() {
         if (!looked) {
@@ -71,7 +72,7 @@ final class QuestLockInfo {
 
     /** Se llama al empezar a dibujar el panel: sin receta bloqueada no hay enlace. */
     static void reset() {
-        linkQuest = null;
+        LINKS.clear();
     }
 
     /** Candado de las quests bloqueadas de Beyond The End Mobs (20x20). */
@@ -159,22 +160,11 @@ final class QuestLockInfo {
         // La quest solo se puede abrir si ya está disponible (no le falta nada). Si aún está bloqueada, su nombre se
         // censura con las runas de la mesa de encantamientos y no es clicable (sería un spoiler).
         boolean openable = (requirements == null || requirements.isEmpty()) && canOpen(quest);
+        boolean anyLink = false;
         if (openable) {
             // Enlace: nombre de la quest (y su NPC); se resalta al pasar el ratón
-            Component link = Component.literal("▶ ").append(title);
-            String text = font.plainSubstrByWidth(link.getString(), maxWidth);
-            int w = font.width(text);
-            int x0 = cx - w / 2;
-            boolean hover = mx >= x0 - 2 && mx < x0 + w + 2 && my >= y - 2 && my < y + font.lineHeight + 2;
-            GuiComponent.fill(stack, x0 - 3, y - 2, x0 + w + 3, y + font.lineHeight + 1, hover ? 0x667700BB : 0x33220044);
-            Component shown = Component.literal(text).withStyle(hover ? ChatFormatting.YELLOW : ChatFormatting.AQUA, ChatFormatting.UNDERLINE);
-            font.drawShadow(stack, shown, x0, y, 0xFFFFFF);
-            linkQuest = quest;
-            linkX0 = x0 - 3;
-            linkY0 = y - 2;
-            linkX1 = x0 + w + 3;
-            linkY1 = y + font.lineHeight + 1;
-            y += font.lineHeight + 4;
+            y = drawLink(stack, font, "▶ " + title.getString(), quest, cx, y, maxWidth, mx, my);
+            anyLink = true;
         } else {
             // Quest aún bloqueada: nombre censurado, sin enlace
             for (FormattedCharSequence line : font.split(censor(title.getString(), ChatFormatting.GRAY), maxWidth)) {
@@ -191,7 +181,14 @@ final class QuestLockInfo {
             y += font.lineHeight + 2;
             java.util.Iterator<String> parents = parentQuestIds(quest).iterator();
             for (Component req : requirements) {
-                for (FormattedCharSequence line : font.split(censorQuestRequirement(req, parents), maxWidth)) {
+                // Requisito "Completa la quest: X" con X ya visible y aún sin completar: enlace que abre X
+                String parent = isQuestRequirement(req) && parents.hasNext() ? parents.next() : null;
+                if (parent != null && req.getString().contains("\u2718") && !isQuestHidden(parent) && canOpen(parent)) {
+                    y = drawLink(stack, font, req.getString().trim(), parent, cx, y, maxWidth, mx, my);
+                    anyLink = true;
+                    continue;
+                }
+                for (FormattedCharSequence line : font.split(censorQuestRequirement(req, parent), maxWidth)) {
                     font.drawShadow(stack, line, cx - font.width(line) / 2.0F, y, 0xFFFFFF);
                     y += font.lineHeight + 1;
                 }
@@ -199,7 +196,7 @@ final class QuestLockInfo {
             y += 2;
         }
 
-        if (openable) {
+        if (anyLink) {
             GuiComponent.drawCenteredString(stack, font, Component.translatable("endereyesgui.recipe.quest_click")
                     .withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC), cx, y, 0xFFFFFF);
             y += font.lineHeight + 4;
@@ -240,17 +237,34 @@ final class QuestLockInfo {
         }
     }
 
+    /** Línea de enlace a una quest, centrada en cx, resaltada al pasar el ratón. Devuelve la y siguiente. */
+    private static int drawLink(PoseStack stack, Font font, String label, String quest, int cx, int y, int maxWidth, int mx, int my) {
+        String text = font.plainSubstrByWidth(label, maxWidth);
+        int w = font.width(text);
+        int x0 = cx - w / 2;
+        boolean hover = mx >= x0 - 2 && mx < x0 + w + 2 && my >= y - 2 && my < y + font.lineHeight + 2;
+        GuiComponent.fill(stack, x0 - 3, y - 2, x0 + w + 3, y + font.lineHeight + 1, hover ? 0x667700BB : 0x33220044);
+        Component shown = Component.literal(text).withStyle(hover ? ChatFormatting.YELLOW : ChatFormatting.AQUA, ChatFormatting.UNDERLINE);
+        font.drawShadow(stack, shown, x0, y, 0xFFFFFF);
+        LINKS.add(new Link(quest, x0 - 3, y - 2, x0 + w + 3, y + font.lineHeight + 1));
+        return y + font.lineHeight + 4;
+    }
+
+    /** ¿Es un requisito "Completa la quest: X"? */
+    private static boolean isQuestRequirement(Component req) {
+        for (Component sib : req.getSiblings()) {
+            if (sib.getContents() instanceof TranslatableContents tc && QUEST_REQUIREMENT_KEY.equals(tc.getKey())) return true;
+        }
+        return false;
+    }
+
     /**
      * Requisito pendiente de otra quest (" ✘ Completa la quest: X (NPC)"): censura el nombre de esa quest si el
      * jugador aún no la puede ver (está bloqueada). Si no se sabe qué quest es (BTE Mobs antiguo), se censura.
      * Los requisitos ya cumplidos y los demás (portales...) se quedan igual.
      */
-    private static Component censorQuestRequirement(Component req, java.util.Iterator<String> parents) {
-        boolean isQuestReq = false;
-        for (Component sib : req.getSiblings()) {
-            if (sib.getContents() instanceof TranslatableContents tc && QUEST_REQUIREMENT_KEY.equals(tc.getKey())) isQuestReq = true;
-        }
-        String parent = isQuestReq && parents.hasNext() ? parents.next() : null;
+    private static Component censorQuestRequirement(Component req, @Nullable String parent) {
+        boolean isQuestReq = isQuestRequirement(req);
         if (!isQuestReq || !req.getString().contains("\u2718")) return req;
         if (parent != null && !isQuestHidden(parent)) return req;
         MutableComponent out = MutableComponent.create(req.getContents()).setStyle(req.getStyle());
@@ -273,9 +287,13 @@ final class QuestLockInfo {
 
     /** Clic en el enlace: abre la quest (al cerrarla se vuelve a esta pantalla). */
     static boolean click(double mx, double my, Screen parent) {
-        if (linkQuest == null || mx < linkX0 || mx >= linkX1 || my < linkY0 || my >= linkY1) return false;
+        Link hit = null;
+        for (Link l : LINKS) {
+            if (mx >= l.x0() && mx < l.x1() && my >= l.y0() && my < l.y1()) { hit = l; break; }
+        }
+        if (hit == null || openQuest == null) return false;
         try {
-            boolean opened = (Boolean) openQuest.invoke(null, linkQuest, parent);
+            boolean opened = (Boolean) openQuest.invoke(null, hit.quest(), parent);
             if (opened) {
                 Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.BOOK_PAGE_TURN, 1.0F));
             }
