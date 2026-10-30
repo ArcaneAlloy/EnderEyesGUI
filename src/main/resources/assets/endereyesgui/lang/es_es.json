@@ -197,7 +197,7 @@
   "endereyesgui.matrix.tier0": "Tier 0 %s",
   "endereyesgui.twilight.quest_lock": "El portal de la fuente de The Forgotten Realm se abre al completar la quest:",
   "endereyesgui.eye.cursed.quest_lock": "Noah te entregará este ojo al completar la quest:",
-  "endereyesgui.eye.evil.quest_lock": "Antonio te entregará este ojo al completar la quest:",
+  "endereyesgui.eye.evil.quest_lock": "El Clérigo de la aldea te dará este Ojo de Ender cuando salves su aldea:",
   "endereyesgui.eye.sculk.quest_lock": "El Warden lo suelta al morir. Noah te lo encarga en la quest:",
   "endereyesgui.recipe.quest_lock": "Se desbloquea al completar la quest:",
   "endereyesgui.recipe.quest_requires": "Esta quest se desbloquea cuando:",
