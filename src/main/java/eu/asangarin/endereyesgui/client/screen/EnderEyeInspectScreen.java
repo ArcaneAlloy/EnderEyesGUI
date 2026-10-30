@@ -6,7 +6,9 @@ import eu.asangarin.endereyesgui.api.IBottom;
 import eu.asangarin.endereyesgui.client.screen.widget.EnderEyeIcon;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
 import org.jetbrains.annotations.NotNull;
 
 public class EnderEyeInspectScreen extends Screen {
@@ -14,16 +16,22 @@ public class EnderEyeInspectScreen extends Screen {
 	private final IBottom eye;
 
 	private int scaledWidth, scaledHeight;
-	/** Botón "Volver": se recoloca debajo de la quest y sus requisitos, que ocupan un alto variable. */
+	/** Botón "Volver": siempre en el mismo sitio; lo que no cabe encima se ve con la barra de scroll. */
 	private Button backButton;
-	private EnderEyeIcon icon;
+
+	// ---- Zona de texto con scroll (descripción, notas y quests) entre la dificultad y el botón "Volver" ----
+	private int areaTop, areaBottom;
+	/** Desplazamiento actual y alto del contenido (del último frame). */
+	private double scroll = 0;
+	private int contentHeight = 0;
+	private boolean draggingBar = false;
+	private static final int BAR_WIDTH = 4;
+	private static final int SCROLL_STEP = 14;
 	/**
-	 * Cuánto se sube todo (icono, dificultad, texto y botón) para que quepa en pantalla. Se calcula con lo que ocupó el
-	 * frame anterior: 0 si sobra sitio, como antes.
+	 * Cuánto se sube la dificultad (y con ella el texto) para pegarla al icono: el icono acaba en y - 23 y la
+	 * dificultad empezaba en y + 9, así que quedaba un hueco de 32 px; con esto queda a 6 px.
 	 */
-	private int shift = 0;
-	/** Margen mínimo por encima del icono (el icono se dibuja de y - 103 a y - 23). */
-	private static final int ICON_TOP = 103;
+	private static final int DIFFICULTY_UP = 26;
 
 	/** Quest de BTE Mobs que abre el portal del Twilight Forest. */
 	private static final String TWILIGHT_QUEST = "bte_mobs:noah_infested_temple";
@@ -112,32 +120,38 @@ public class EnderEyeInspectScreen extends Screen {
 
 		scaledWidth = width / 2;
 		scaledHeight = height / 2;
-		shift = 0;
-		icon = addRenderableWidget(new EnderEyeIcon(scaledWidth, scaledHeight, eye.getIconTexture(unlocked)));
-		// La guía ocupa más que la descripción: el botón va más abajo (en render se coloca justo debajo de lo dibujado)
-		int backY = guide() != null ? Math.min(height - 24, scaledHeight + 100) : scaledHeight + 80;
+		addRenderableWidget(new EnderEyeIcon(scaledWidth, scaledHeight, eye.getIconTexture(unlocked)));
+		// "Volver" fijo: abajo del todo si hay guía (notas y quests); si solo hay descripción, donde estaba siempre
+		int backY = guide() != null ? height - 26 : Math.min(height - 26, scaledHeight + 80);
 		backButton = addRenderableWidget(new Button(scaledWidth - 30, backY, 60, 20, Component.translatable("gui.back"), (button) -> Networking.requestEnderGUI()));
+		// Zona de texto: de debajo de la dificultad (o del icono, sin dificultad) hasta encima del botón
+		areaTop = eye.getDifficult() != null ? scaledHeight + 34 - DIFFICULTY_UP : scaledHeight + 2;
+		areaBottom = backY - 4;
 	}
 
 	@Override
 	public void render(@NotNull PoseStack stack, int x, int y, float delta) {
 		this.renderBackground(stack);
-		// Todo cuelga de "anchor" (antes, del centro de la pantalla): se sube "shift" si el texto no cabe
-		int anchor = scaledHeight - shift;
-		if (icon != null) icon.y = anchor;
 		super.render(stack, x, y, delta);
-		renderDifficulty(stack, anchor);
+		renderDifficulty(stack);
 		QuestLockInfo.reset();
 		int maxWidth = width - 40;
 		Guide guide = guide();
 
+		int maxScroll = maxScroll();
+		scroll = Mth.clamp(scroll, 0, maxScroll);
+		// Fuera de la zona de texto el ratón no resalta enlaces (están recortados)
+		boolean inArea = y >= areaTop && y < areaBottom;
+		int my = inArea ? y : -10000;
+
+		// Todo el texto se dibuja recortado a la zona y desplazado por el scroll
+		enableScissor(areaTop, areaBottom);
+		int start = areaTop - (int) Math.round(scroll);
 		int lineY;
 		if (guide == null || guide.description()) {
-			lineY = renderDescription(stack, anchor + 40, maxWidth) + 4;
+			lineY = renderDescription(stack, start + 6, maxWidth) + 4;
 		} else {
-			// La guía sustituye a la descripción. Los ojos tienen debajo del icono la dificultad en grande: empieza
-			// debajo de ella
-			lineY = eye.getDifficult() != null ? anchor + 36 : anchor + 4;
+			lineY = start + 2; // la guía sustituye a la descripción
 		}
 
 		if (guide != null) {
@@ -153,29 +167,103 @@ public class EnderEyeInspectScreen extends Screen {
 					lineY += 2;
 				} else {
 					lineY = QuestLockInfo.renderQuest(stack, this.font, part.quest(), Component.translatable(part.key()),
-							scaledWidth, lineY, maxWidth, x, y, false);
+							scaledWidth, lineY, maxWidth, x, my, false);
 				}
 			}
 			// Un solo aviso de clic al final, si hay algún enlace
 			if (QuestLockInfo.hasLinks()) lineY = QuestLockInfo.renderClickHint(stack, this.font, scaledWidth, lineY);
 			// Sin BTE Mobs (o con una versión sin enlaces a quests) no se dibuja nada de la guía: la descripción fija
-			if (!guide.description() && lineY == partsStart) lineY = renderDescription(stack, anchor + 40, maxWidth);
+			if (!guide.description() && lineY == partsStart) lineY = renderDescription(stack, start + 6, maxWidth);
 		}
+		RenderSystem.disableScissor();
 
-		// El botón "Volver" justo debajo de lo dibujado
-		int backY = Math.max(anchor + 80, lineY + 6);
-		if (backButton != null) backButton.y = Math.min(height - 24, backY);
+		contentHeight = lineY - start;
+		renderScrollBar(stack, x, y);
+	}
 
-		// Si el botón (20 px + 4 de margen) no cabe, en el siguiente frame se sube todo lo que falte, sin que el icono
-		// se salga por arriba. Si sobra sitio, vuelve a su posición normal.
-		int below = backY + 24 - anchor;
-		int wanted = Math.max(0, below - (height - scaledHeight));
-		shift = Math.min(wanted, Math.max(0, scaledHeight - ICON_TOP - 4));
+	// ---------------------------------------------------------------- scroll
+
+	private int areaHeight() {
+		return Math.max(0, areaBottom - areaTop);
+	}
+
+	private int maxScroll() {
+		return Math.max(0, contentHeight - areaHeight());
+	}
+
+	/** Recorte en coordenadas de la ventana (y desde abajo). */
+	private void enableScissor(int top, int bottom) {
+		com.mojang.blaze3d.platform.Window window = net.minecraft.client.Minecraft.getInstance().getWindow();
+		double scale = window.getGuiScale();
+		RenderSystem.enableScissor(0, (int) (window.getHeight() - bottom * scale), window.getWidth(),
+				(int) (Math.max(0, bottom - top) * scale));
+	}
+
+	private int barX() {
+		return width - 14;
+	}
+
+	/** Alto y posición de la barra que se arrastra; null si todo cabe. */
+	private int[] thumb() {
+		int max = maxScroll();
+		if (max <= 0) return null;
+		int track = areaHeight();
+		int size = Math.max(12, track * track / Math.max(1, contentHeight));
+		int top = areaTop + (int) Math.round((track - size) * (scroll / max));
+		return new int[]{top, size};
+	}
+
+	private void renderScrollBar(PoseStack stack, int mx, int my) {
+		int[] t = thumb();
+		if (t == null) return;
+		int x0 = barX();
+		fill(stack, x0, areaTop, x0 + BAR_WIDTH, areaBottom, 0x60000000);
+		boolean hover = draggingBar || (mx >= x0 - 2 && mx < x0 + BAR_WIDTH + 2 && my >= t[0] && my < t[0] + t[1]);
+		fill(stack, x0, t[0], x0 + BAR_WIDTH, t[0] + t[1], hover ? 0xFFFFFFFF : 0xFFA0A0A0);
+	}
+
+	private void scrollToMouse(double my) {
+		int[] t = thumb();
+		if (t == null) return;
+		double free = areaHeight() - t[1];
+		if (free <= 0) return;
+		scroll = Mth.clamp((my - areaTop - t[1] / 2.0) / free * maxScroll(), 0, maxScroll());
+	}
+
+	@Override
+	public boolean mouseScrolled(double mx, double my, double delta) {
+		if (maxScroll() > 0) {
+			scroll = Mth.clamp(scroll - delta * SCROLL_STEP, 0, maxScroll());
+			return true;
+		}
+		return super.mouseScrolled(mx, my, delta);
+	}
+
+	@Override
+	public boolean mouseDragged(double mx, double my, int button, double dx, double dy) {
+		if (draggingBar) {
+			scrollToMouse(my);
+			return true;
+		}
+		return super.mouseDragged(mx, my, button, dx, dy);
+	}
+
+	@Override
+	public boolean mouseReleased(double mx, double my, int button) {
+		draggingBar = false;
+		return super.mouseReleased(mx, my, button);
 	}
 
 	@Override
 	public boolean mouseClicked(double mx, double my, int button) {
-		if (hasQuests() && button == 0 && QuestLockInfo.click(mx, my, this)) return true;
+		// Barra de scroll: arrastrar (o pulsar en la pista para saltar)
+		if (button == 0 && thumb() != null && mx >= barX() - 2 && mx < barX() + BAR_WIDTH + 2 && my >= areaTop && my < areaBottom) {
+			draggingBar = true;
+			scrollToMouse(my);
+			return true;
+		}
+		// Enlaces a quests: solo la parte visible de la zona de texto
+		if (hasQuests() && button == 0 && my >= areaTop && my < areaBottom && QuestLockInfo.click(mx, my, this)) return true;
 		return super.mouseClicked(mx, my, button);
 	}
 
@@ -196,7 +284,7 @@ public class EnderEyeInspectScreen extends Screen {
 	}
 
 	/** Dificultad del ojo en grande, con su color, entre el icono y la descripción. */
-	private void renderDifficulty(PoseStack stack, int anchor) {
+	private void renderDifficulty(PoseStack stack) {
 		eu.asangarin.endereyesgui.util.EnderEyeDifficult difficult = eye.getDifficult();
 		if (difficult == null) return;
 		Component text = Component.translatable(difficult.getTranslate()).withStyle(difficult.getColorForChat());
@@ -204,7 +292,7 @@ public class EnderEyeInspectScreen extends Screen {
 		// El icono deja el depth test activo y escribe profundidad; dibujamos por encima de todo
 		com.mojang.blaze3d.systems.RenderSystem.disableDepthTest();
 		stack.pushPose();
-		stack.translate(scaledWidth, anchor + 9, 400);
+		stack.translate(scaledWidth, scaledHeight + 9 - DIFFICULTY_UP, 400);
 		stack.scale(scale, scale, 1.0F);
 		this.font.drawShadow(stack, text, -this.font.width(text) / 2.0F, 0, 0xFFFFFF);
 		stack.popPose();
