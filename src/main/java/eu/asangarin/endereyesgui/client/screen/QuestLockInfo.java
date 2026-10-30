@@ -75,6 +75,18 @@ final class QuestLockInfo {
         LINKS.clear();
     }
 
+    /** ¿Se ha dibujado algún enlace desde el último reset()? */
+    static boolean hasLinks() {
+        return !LINKS.isEmpty();
+    }
+
+    /** Aviso "Haz clic en la quest para abrirla", centrado en cx. Devuelve la y siguiente. */
+    static int renderClickHint(PoseStack stack, Font font, int cx, int y) {
+        GuiComponent.drawCenteredString(stack, font, Component.translatable("endereyesgui.recipe.quest_click")
+                .withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC), cx, y, 0xFFFFFF);
+        return y + font.lineHeight + 4;
+    }
+
     /** Candado de las quests bloqueadas de Beyond The End Mobs (20x20). */
     private static final ResourceLocation LOCK = new ResourceLocation("bte_mobs", "textures/gui/buttons/explorer/candado.png");
 
@@ -139,6 +151,15 @@ final class QuestLockInfo {
      */
     @SuppressWarnings("unchecked")
     static int renderQuest(PoseStack stack, Font font, String quest, Component header, int cx, int y, int maxWidth, int mx, int my) {
+        return renderQuest(stack, font, quest, header, cx, y, maxWidth, mx, my, true);
+    }
+
+    /**
+     * Igual, pero con clickHint = false no dibuja el aviso "Haz clic en la quest para abrirla" (para pantallas con
+     * varias quests seguidas, que lo dibujan una sola vez al final con renderClickHint).
+     */
+    static int renderQuest(PoseStack stack, Font font, String quest, Component header, int cx, int y, int maxWidth, int mx, int my,
+                           boolean clickHint) {
         if (!lookup()) return y;
         Component title;
         List<Component> requirements;
@@ -196,7 +217,7 @@ final class QuestLockInfo {
             y += 2;
         }
 
-        if (anyLink) {
+        if (anyLink && clickHint) {
             GuiComponent.drawCenteredString(stack, font, Component.translatable("endereyesgui.recipe.quest_click")
                     .withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC), cx, y, 0xFFFFFF);
             y += font.lineHeight + 4;
