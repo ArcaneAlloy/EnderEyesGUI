@@ -16,6 +16,14 @@ public class EnderEyeInspectScreen extends Screen {
 	private int scaledWidth, scaledHeight;
 	/** Botón "Volver": se recoloca debajo de la quest y sus requisitos, que ocupan un alto variable. */
 	private Button backButton;
+	private EnderEyeIcon icon;
+	/**
+	 * Cuánto se sube todo (icono, dificultad, texto y botón) para que quepa en pantalla. Se calcula con lo que ocupó el
+	 * frame anterior: 0 si sobra sitio, como antes.
+	 */
+	private int shift = 0;
+	/** Margen mínimo por encima del icono (el icono se dibuja de y - 103 a y - 23). */
+	private static final int ICON_TOP = 103;
 
 	/** Quest de BTE Mobs que abre el portal del Twilight Forest. */
 	private static final String TWILIGHT_QUEST = "bte_mobs:noah_infested_temple";
@@ -104,7 +112,8 @@ public class EnderEyeInspectScreen extends Screen {
 
 		scaledWidth = width / 2;
 		scaledHeight = height / 2;
-		addRenderableWidget(new EnderEyeIcon(scaledWidth, scaledHeight, eye.getIconTexture(unlocked)));
+		shift = 0;
+		icon = addRenderableWidget(new EnderEyeIcon(scaledWidth, scaledHeight, eye.getIconTexture(unlocked)));
 		// La guía ocupa más que la descripción: el botón va más abajo (en render se coloca justo debajo de lo dibujado)
 		int backY = guide() != null ? Math.min(height - 24, scaledHeight + 100) : scaledHeight + 80;
 		backButton = addRenderableWidget(new Button(scaledWidth - 30, backY, 60, 20, Component.translatable("gui.back"), (button) -> Networking.requestEnderGUI()));
@@ -113,19 +122,22 @@ public class EnderEyeInspectScreen extends Screen {
 	@Override
 	public void render(@NotNull PoseStack stack, int x, int y, float delta) {
 		this.renderBackground(stack);
+		// Todo cuelga de "anchor" (antes, del centro de la pantalla): se sube "shift" si el texto no cabe
+		int anchor = scaledHeight - shift;
+		if (icon != null) icon.y = anchor;
 		super.render(stack, x, y, delta);
-		renderDifficulty(stack);
+		renderDifficulty(stack, anchor);
 		QuestLockInfo.reset();
 		int maxWidth = width - 40;
 		Guide guide = guide();
 
 		int lineY;
 		if (guide == null || guide.description()) {
-			lineY = renderDescription(stack, scaledHeight + 40, maxWidth) + 4;
+			lineY = renderDescription(stack, anchor + 40, maxWidth) + 4;
 		} else {
 			// La guía sustituye a la descripción. Los ojos tienen debajo del icono la dificultad en grande: empieza
 			// debajo de ella
-			lineY = eye.getDifficult() != null ? scaledHeight + 36 : scaledHeight + 4;
+			lineY = eye.getDifficult() != null ? anchor + 36 : anchor + 4;
 		}
 
 		if (guide != null) {
@@ -147,11 +159,18 @@ public class EnderEyeInspectScreen extends Screen {
 			// Un solo aviso de clic al final, si hay algún enlace
 			if (QuestLockInfo.hasLinks()) lineY = QuestLockInfo.renderClickHint(stack, this.font, scaledWidth, lineY);
 			// Sin BTE Mobs (o con una versión sin enlaces a quests) no se dibuja nada de la guía: la descripción fija
-			if (!guide.description() && lineY == partsStart) lineY = renderDescription(stack, scaledHeight + 40, maxWidth);
+			if (!guide.description() && lineY == partsStart) lineY = renderDescription(stack, anchor + 40, maxWidth);
 		}
 
-		// El botón "Volver" justo debajo de lo dibujado, sin salirse de la pantalla
-		if (backButton != null) backButton.y = Math.max(scaledHeight + 80, Math.min(height - 24, lineY + 6));
+		// El botón "Volver" justo debajo de lo dibujado
+		int backY = Math.max(anchor + 80, lineY + 6);
+		if (backButton != null) backButton.y = Math.min(height - 24, backY);
+
+		// Si el botón (20 px + 4 de margen) no cabe, en el siguiente frame se sube todo lo que falte, sin que el icono
+		// se salga por arriba. Si sobra sitio, vuelve a su posición normal.
+		int below = backY + 24 - anchor;
+		int wanted = Math.max(0, below - (height - scaledHeight));
+		shift = Math.min(wanted, Math.max(0, scaledHeight - ICON_TOP - 4));
 	}
 
 	@Override
@@ -177,7 +196,7 @@ public class EnderEyeInspectScreen extends Screen {
 	}
 
 	/** Dificultad del ojo en grande, con su color, entre el icono y la descripción. */
-	private void renderDifficulty(PoseStack stack) {
+	private void renderDifficulty(PoseStack stack, int anchor) {
 		eu.asangarin.endereyesgui.util.EnderEyeDifficult difficult = eye.getDifficult();
 		if (difficult == null) return;
 		Component text = Component.translatable(difficult.getTranslate()).withStyle(difficult.getColorForChat());
@@ -185,7 +204,7 @@ public class EnderEyeInspectScreen extends Screen {
 		// El icono deja el depth test activo y escribe profundidad; dibujamos por encima de todo
 		com.mojang.blaze3d.systems.RenderSystem.disableDepthTest();
 		stack.pushPose();
-		stack.translate(scaledWidth, scaledHeight + 9, 400);
+		stack.translate(scaledWidth, anchor + 9, 400);
 		stack.scale(scale, scale, 1.0F);
 		this.font.drawShadow(stack, text, -this.font.width(text) / 2.0F, 0, 0xFFFFFF);
 		stack.popPose();
