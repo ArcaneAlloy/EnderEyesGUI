@@ -34,7 +34,14 @@ public class EnderEyesScreen extends Screen {
 	private static final ResourceLocation TF_ROOT   = new ResourceLocation("twilightforest", "root");
 	private static final ResourceLocation TF_PORTAL = new ResourceLocation("twilightforest", "portal");
 
+	/** Quest de Noah cuya recompensa abre el portal al Twilight Forest en la fuente del Lobby. */
+	private static final String TWILIGHT_PORTAL_QUEST = "bte_mobs:noah_infested_temple";
+
 	private boolean hasTwilightForestAccess() {
+		// El portal no se crea de la forma tradicional: lo coloca la recompensa de la quest de Noah.
+		// En cuanto está reclamada, el portal existe aunque el jugador aún no haya entrado.
+		if (QuestLockInfo.isQuestClaimed(TWILIGHT_PORTAL_QUEST)) return true;
+
 		// Flag del mod base: se activa al entrar al TF por primera vez
 		PortalPlayer pp = PortalPlayer.get(minecraft.player).orElse(null);
 		if (pp != null && pp.visitTwilightForest()) return true;

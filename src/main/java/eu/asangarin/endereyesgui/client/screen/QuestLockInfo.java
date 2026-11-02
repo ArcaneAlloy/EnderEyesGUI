@@ -37,6 +37,7 @@ final class QuestLockInfo {
     /** Opcional: ids de las quests previas (PARENT_QUEST) de una quest, en el orden de sus requisitos. */
     @Nullable
     private static Method parentQuests;
+    private static Method isQuestClaimed;
 
     /** Enlace a una quest dibujado en el último frame (zona clicable). */
     private record Link(String quest, int x0, int y0, int x1, int y1) {}
@@ -66,8 +67,24 @@ final class QuestLockInfo {
             } catch (Throwable t) {
                 parentQuests = null;
             }
+            try {
+                isQuestClaimed = Class.forName(API).getMethod("isQuestClaimed", String.class);
+            } catch (Throwable t) {
+                isQuestClaimed = null;
+            }
         }
         return questForRecipe != null;
+    }
+
+    /** ¿La quest de BTE Mobs ya está reclamada? false si BTE Mobs no está o no tiene el método. */
+    static boolean isQuestClaimed(String quest) {
+        lookup();
+        if (isQuestClaimed == null) return false;
+        try {
+            return (Boolean) isQuestClaimed.invoke(null, quest);
+        } catch (Throwable t) {
+            return false;
+        }
     }
 
     /** Se llama al empezar a dibujar el panel: sin receta bloqueada no hay enlace. */
