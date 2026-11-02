@@ -651,11 +651,8 @@ public class EnchantmentRecipesScreen extends Screen {
 			hoveringResult = (mx >= px + PAD && mx < px + PAD + 16 && my >= ty && my < ty + 16);
 			if (hoveringResult) jeiHoveredItem = base;
 		}
-		String effectId = selectedPotion.getEffectId();
-		String[] words = effectId.substring(effectId.lastIndexOf(':') + 1).split("_");
-		StringBuilder sb = new StringBuilder();
-		for (String w : words) { if (!w.isEmpty()) { if (sb.length() > 0) sb.append(" "); sb.append(Character.toUpperCase(w.charAt(0))).append(w.substring(1)); } }
-		font.draw(stack, sb.toString(), px + PAD + 20, ty + (16 - font.lineHeight) / 2, 0xDD00FF);
+		font.draw(stack, font.plainSubstrByWidth(potionDisplayName(selectedPotion).getString(), pw - PAD * 2 - 20),
+				px + PAD + 20, ty + (16 - font.lineHeight) / 2, 0xDD00FF);
 		ty += 22;
 		fill(stack, px + PAD, ty, px + pw - PAD, ty + 1, C_DIVIDER); ty += 6;
 		if (selectedPotion.isUnlocked()) {
@@ -763,6 +760,62 @@ public class EnchantmentRecipesScreen extends Screen {
 		keys.add(effect.getDescriptionId() + ".desc");
 		for (String k : keys) if (net.minecraft.client.resources.language.I18n.exists(k)) return k;
 		return null;
+	}
+
+	/** Nombre traducido de cada poción (se calcula una vez por receta e idioma). */
+	private static final java.util.Map<String, Component> POTION_NAMES = new java.util.HashMap<>();
+	private static String potionNamesLang;
+
+	/**
+	 * Nombre de la poción en el idioma del juego. Antes se sacaba del id ("fire_resistance" -> "Fire Resistance"),
+	 * así que salía siempre en inglés. Ahora:
+	 *  - Si la poción tiene un solo efecto, el nombre del efecto ("Resistencia al fuego").
+	 *  - Si tiene varios (Maestro tortuga), el nombre de la poción ("Poción del maestro tortuga").
+	 *  - Los niveles que van en el id ("speed_iii") se añaden en números romanos ("Velocidad III").
+	 *  - Si no se encuentra nada, el id como antes.
+	 */
+	private static Component potionDisplayName(WarlockPotionRecipeData d) {
+		String lang = net.minecraft.client.Minecraft.getInstance().getLanguageManager().getSelected().getCode();
+		if (!lang.equals(potionNamesLang)) {
+			POTION_NAMES.clear();
+			potionNamesLang = lang;
+		}
+		String key = d.getRecipeId() + "|" + d.getEffectId();
+		Component cached = POTION_NAMES.get(key);
+		if (cached != null) return cached;
+
+		String eid = d.getEffectId();
+		net.minecraft.world.item.alchemy.Potion pot = null;
+		if (!d.getBasePotion().isEmpty()) pot = net.minecraft.world.item.alchemy.PotionUtils.getPotion(d.getBasePotion());
+		if (pot == null || pot.getEffects().isEmpty()) {
+			net.minecraft.resources.ResourceLocation id = net.minecraft.resources.ResourceLocation.tryParse(eid);
+			net.minecraft.world.item.alchemy.Potion byId = id == null ? null : net.minecraftforge.registries.ForgeRegistries.POTIONS.getValue(id);
+			if (byId != null && !byId.getEffects().isEmpty()) pot = byId;
+		}
+		java.util.List<net.minecraft.world.effect.MobEffect> effects = new java.util.ArrayList<>();
+		if (pot != null) for (net.minecraft.world.effect.MobEffectInstance inst : pot.getEffects()) if (!effects.contains(inst.getEffect())) effects.add(inst.getEffect());
+		if (effects.isEmpty()) effects = effectsFromId(eid);
+
+		String path = eid.substring(eid.lastIndexOf(':') + 1);
+		Component name;
+		if (effects.size() == 1) {
+			name = effects.get(0).getDisplayName();
+			for (String level : new String[]{"iii", "iv", "ii"}) {
+				if (path.endsWith("_" + level)) {
+					name = name.copy().append(" " + level.toUpperCase(java.util.Locale.ROOT));
+					break;
+				}
+			}
+		} else if (pot != null && !pot.getEffects().isEmpty()) {
+			name = Component.translatable(pot.getName(Items.POTION.getDescriptionId() + ".effect."));
+		} else {
+			String[] words = path.split("_");
+			StringBuilder sb = new StringBuilder();
+			for (String w : words) { if (!w.isEmpty()) { if (sb.length() > 0) sb.append(" "); sb.append(Character.toUpperCase(w.charAt(0))).append(w.substring(1)); } }
+			name = Component.literal(sb.toString());
+		}
+		POTION_NAMES.put(key, name);
+		return name;
 	}
 
 	/**
@@ -882,8 +935,10 @@ public class EnchantmentRecipesScreen extends Screen {
 				}
 			} else {
 				for (WarlockPotionRecipeData d : potions) {
-					String name = d.getEffectId().substring(d.getEffectId().lastIndexOf(':') + 1).replace("_", " ");
-					if (searchTerm.isEmpty() || name.contains(searchTerm)) addEntry(new PotionEntry(d));
+					// Se busca por el nombre traducido y también por el id (para quien busque en inglés)
+					String name = potionDisplayName(d).getString().toLowerCase();
+					String idName = d.getEffectId().substring(d.getEffectId().lastIndexOf(':') + 1).replace("_", " ");
+					if (searchTerm.isEmpty() || name.contains(searchTerm) || idName.contains(searchTerm)) addEntry(new PotionEntry(d));
 				}
 			}
 		}
@@ -932,11 +987,7 @@ public class EnchantmentRecipesScreen extends Screen {
 				else if (hovered) fill(stack, left - 1, top - 1, left + width - 3, top + height + 1, C_HOVER);
 				String icon = data.isUnlocked() ? ICON_OK : ICON_ERR;
 				font.draw(stack, icon, left + 2, top + 2, data.isUnlocked() ? C_UNLOCKED : C_LOCKED);
-				String eid = data.getEffectId();
-				String[] wds = eid.substring(eid.lastIndexOf(':') + 1).split("_");
-				StringBuilder sb = new StringBuilder();
-				for (String w : wds) { if (!w.isEmpty()) { if (sb.length() > 0) sb.append(" "); sb.append(Character.toUpperCase(w.charAt(0))).append(w.substring(1)); } }
-				font.draw(stack, font.plainSubstrByWidth(sb.toString(), width - font.width(icon) - 8),
+				font.draw(stack, font.plainSubstrByWidth(potionDisplayName(data).getString(), width - font.width(icon) - 8),
 						left + 2 + font.width(icon), top + 2, data.isUnlocked() ? 0xEE88FF : 0x996699);
 			}
 		}
