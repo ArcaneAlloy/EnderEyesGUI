@@ -41,8 +41,6 @@ public class EnchantmentRecipesScreen extends Screen {
 	private static final int   BOTTOM_H      = 28;
 	private static final int   PAD           = 8;
 
-	private static final int C_UNLOCKED   = 0xFF55FF55;
-	private static final int C_LOCKED     = 0xFFFF5555;
 	private static final int C_LIST_BG    = 0xAA080018;
 	private static final int C_PANEL_BG   = 0xCC100030;
 	private static final int C_PANEL_BORD = 0xFF8800CC;
@@ -54,7 +52,6 @@ public class EnchantmentRecipesScreen extends Screen {
 	private static final int C_TAB_BORD   = 0xFF8800CC;
 
 	private static final String ICON_OK  = "\u2714 ";
-	private static final String ICON_ERR = "\u2718 ";
 
 	private static final String[] ENCH_TABS = {
 		"all", "helmet", "chestplate", "leggings", "boots", "melee", "tools", "ranged", "other"
@@ -75,6 +72,7 @@ public class EnchantmentRecipesScreen extends Screen {
 	private String activeEnchTab = "all";
 	private RecipeList recipeList;
 	private EditBox searchBox;
+	private java.util.List<RecipeLockState.FilterButton> filterButtons = new java.util.ArrayList<>();
 	private String searchTerm = "";
 	/** Scroll del panel de detalle (cuando no cabe todo). */
 	private final PanelScroll detailScroll = new PanelScroll();
@@ -398,7 +396,7 @@ public class EnchantmentRecipesScreen extends Screen {
 		int listBot = height - BOTTOM_H;
 
 		int searchY = openPotions ? TITLE_H + 2 : TITLE_H + tabRowsHeight() + 2;
-		searchBox = new EditBox(font, 2, searchY, listW - 4, 14,
+		searchBox = new EditBox(font, 2, searchY, listW - 4 - RecipeLockState.BUTTONS_W, 14,
 				Component.translatable("endereyesgui.search"));
 		searchBox.setMaxLength(50);
 		searchBox.setResponder(text -> {
@@ -406,6 +404,10 @@ public class EnchantmentRecipesScreen extends Screen {
 			rebuildList(listW, lt, listBot);
 		});
 		addRenderableWidget(searchBox);
+		// Filtro por estado (desbloqueada / desbloqueable / bloqueada), a la derecha de la busqueda
+		filterButtons = RecipeLockState.createButtons(font, listW - 2 - RecipeLockState.BUTTONS_W + RecipeLockState.BUTTON_GAP, searchY, 14,
+				() -> rebuildList(listW, lt, listBot));
+		filterButtons.forEach(this::addRenderableWidget);
 
 		recipeList = new RecipeList(minecraft, listW, listBot - lt, lt);
 		addWidget(recipeList);
@@ -449,6 +451,7 @@ public class EnchantmentRecipesScreen extends Screen {
 		}
 
 		super.render(stack, mx, my, delta);
+		RecipeLockState.renderTooltips(this, stack, filterButtons, mx, my);
 
 		if (hoveredIngredient != null)
 			renderTooltip(stack, hoveredIngredient, hoveredIngX, hoveredIngY);
@@ -655,13 +658,7 @@ public class EnchantmentRecipesScreen extends Screen {
 				px + PAD + 20, ty + (16 - font.lineHeight) / 2, 0xDD00FF);
 		ty += 22;
 		fill(stack, px + PAD, ty, px + pw - PAD, ty + 1, C_DIVIDER); ty += 6;
-		if (selectedPotion.isUnlocked()) {
-			drawCenteredString(stack, font, Component.literal(ICON_OK).withStyle(ChatFormatting.GREEN)
-					.append(Component.translatable("endereyesgui.enchantments.detail.unlocked").withStyle(ChatFormatting.GREEN)), cx, ty, 0xFFFFFF);
-		} else {
-			drawCenteredString(stack, font, Component.literal(ICON_ERR).withStyle(ChatFormatting.RED)
-					.append(Component.translatable("endereyesgui.enchantments.detail.locked").withStyle(ChatFormatting.RED)), cx, ty, 0xFFFFFF);
-		}
+		potionState(selectedPotion).drawDetailStatus(stack, font, cx, ty);
 		ty += font.lineHeight + 8;
 		fill(stack, px + PAD, ty, px + pw - PAD, ty + 1, C_DIVIDER); ty += 6;
 
@@ -919,6 +916,16 @@ public class EnchantmentRecipesScreen extends Screen {
 		return book;
 	}
 
+	/** Encantamiento: bloqueado (candado) mientras falten Ender Eyes; si no, desbloqueable ya (X amarilla). */
+	private RecipeLockState enchState(EnchantmentRecipeData d) {
+		return RecipeLockState.of(d.isUnlocked(), !d.isUnlocked() && eyesEarned < d.getNeedEyes());
+	}
+
+	/** Las pociones no dependen de nada mas: desbloqueadas o desbloqueables. */
+	private static RecipeLockState potionState(WarlockPotionRecipeData d) {
+		return RecipeLockState.of(d.isUnlocked(), false);
+	}
+
 	private class RecipeList extends ObjectSelectionList<RecipeList.BaseEntry> {
 		RecipeList(Minecraft mc, int width, int height, int top) {
 			super(mc, width, height, top, top + height, 14);
@@ -930,7 +937,7 @@ public class EnchantmentRecipesScreen extends Screen {
 			if (!openPotions) {
 				for (EnchantmentRecipeData d : recipes) {
 					if (!enchMatchesTab(d, activeEnchTab)) continue;
-					if (searchTerm.isEmpty() || getEnchantmentName(d).getString().toLowerCase().contains(searchTerm))
+					if (enchState(d).isShown() && (searchTerm.isEmpty() || getEnchantmentName(d).getString().toLowerCase().contains(searchTerm)))
 						addEntry(new EnchEntry(d));
 				}
 			} else {
@@ -938,7 +945,7 @@ public class EnchantmentRecipesScreen extends Screen {
 					// Se busca por el nombre traducido y también por el id (para quien busque en inglés)
 					String name = potionDisplayName(d).getString().toLowerCase();
 					String idName = d.getEffectId().substring(d.getEffectId().lastIndexOf(':') + 1).replace("_", " ");
-					if (searchTerm.isEmpty() || name.contains(searchTerm) || idName.contains(searchTerm)) addEntry(new PotionEntry(d));
+					if (potionState(d).isShown() && (searchTerm.isEmpty() || name.contains(searchTerm) || idName.contains(searchTerm))) addEntry(new PotionEntry(d));
 				}
 			}
 		}
@@ -965,14 +972,12 @@ public class EnchantmentRecipesScreen extends Screen {
 				boolean sel = RecipeList.this.getSelected() == this;
 				if (sel)          fill(stack, left - 1, top - 1, left + width - 3, top + height + 1, C_SELECTED);
 				else if (hovered) fill(stack, left - 1, top - 1, left + width - 3, top + height + 1, C_HOVER);
-				String icon = data.isUnlocked() ? ICON_OK : ICON_ERR;
 				// Faltan Ender Eyes: aunque se consiga el libro no se puede desbloquear todavía -> candado
-				if (!data.isUnlocked() && eyesEarned < data.getNeedEyes())
-					QuestLockInfo.drawLock(stack, left + 2, top + 1, font.lineHeight);
-				else
-					font.draw(stack, icon, left + 2, top + 2, data.isUnlocked() ? C_UNLOCKED : C_LOCKED);
-				font.draw(stack, font.plainSubstrByWidth(getEnchantmentName(data).getString(), width - font.width(icon) - 8),
-						left + 2 + font.width(icon), top + 2, data.isUnlocked() ? 0xEE88FF : 0x996699);
+				RecipeLockState state = enchState(data);
+				state.drawListIcon(stack, font, left, top, false);
+				int iconW = RecipeLockState.iconWidth(font);
+				font.draw(stack, font.plainSubstrByWidth(getEnchantmentName(data).getString(), width - iconW - 8),
+						left + 2 + iconW, top + 2, state.nameColor());
 			}
 		}
 
@@ -985,10 +990,11 @@ public class EnchantmentRecipesScreen extends Screen {
 				boolean sel = RecipeList.this.getSelected() == this;
 				if (sel)          fill(stack, left - 1, top - 1, left + width - 3, top + height + 1, C_SELECTED);
 				else if (hovered) fill(stack, left - 1, top - 1, left + width - 3, top + height + 1, C_HOVER);
-				String icon = data.isUnlocked() ? ICON_OK : ICON_ERR;
-				font.draw(stack, icon, left + 2, top + 2, data.isUnlocked() ? C_UNLOCKED : C_LOCKED);
-				font.draw(stack, font.plainSubstrByWidth(potionDisplayName(data).getString(), width - font.width(icon) - 8),
-						left + 2 + font.width(icon), top + 2, data.isUnlocked() ? 0xEE88FF : 0x996699);
+				RecipeLockState state = potionState(data);
+				state.drawListIcon(stack, font, left, top, false);
+				int iconW = RecipeLockState.iconWidth(font);
+				font.draw(stack, font.plainSubstrByWidth(potionDisplayName(data).getString(), width - iconW - 8),
+						left + 2 + iconW, top + 2, state.nameColor());
 			}
 		}
 	}

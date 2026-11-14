@@ -11,7 +11,6 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.ObjectSelectionList;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
@@ -38,8 +37,6 @@ public class SimpleRecipesScreen extends Screen {
     private static final int   BOTTOM_H      = 28;
     private static final int   PAD           = 8;
 
-    private static final int C_UNLOCKED   = 0xFF55FF55;
-    private static final int C_LOCKED     = 0xFFFF5555;
     private static final int C_LIST_BG    = 0xAA080018;
     private static final int C_PANEL_BG   = 0xCC100030;
     private static final int C_PANEL_BORD = 0xFF8800CC;
@@ -47,11 +44,10 @@ public class SimpleRecipesScreen extends Screen {
     private static final int C_SELECTED   = 0x887700BB;
     private static final int C_HOVER      = 0x447700BB;
 
-    private static final String ICON_OK  = "\u2714 ";
-    private static final String ICON_ERR = "\u2718 ";
 
     private RecipeList recipeList;
     private EditBox searchBox;
+    private java.util.List<RecipeLockState.FilterButton> filterButtons = new java.util.ArrayList<>();
     private String searchTerm = "";
 
     public SimpleRecipesScreen(List<SimpleRecipeData> recipes, String titleKey) {
@@ -68,7 +64,7 @@ public class SimpleRecipesScreen extends Screen {
         int listTop = TITLE_H + 18;
         int listBot = height - BOTTOM_H;
 
-        searchBox = new EditBox(font, 2, TITLE_H + 2, listW - 4, 14,
+        searchBox = new EditBox(font, 2, TITLE_H + 2, listW - 4 - RecipeLockState.BUTTONS_W, 14,
                 Component.translatable("endereyesgui.search"));
         searchBox.setMaxLength(50);
         searchBox.setResponder(text -> {
@@ -78,6 +74,15 @@ public class SimpleRecipesScreen extends Screen {
             addWidget(recipeList);
         });
         addRenderableWidget(searchBox);
+        // Filtro por estado (desbloqueada / desbloqueable / bloqueada), a la derecha de la busqueda
+        filterButtons = RecipeLockState.createButtons(font, listW - 2 - RecipeLockState.BUTTONS_W + RecipeLockState.BUTTON_GAP, TITLE_H + 2, 14,
+                () -> {
+                    selected = null;
+                    children().removeIf(c -> c instanceof RecipeList);
+                    recipeList = new RecipeList(minecraft, listW, listBot - listTop, listTop);
+                    addWidget(recipeList);
+                });
+        filterButtons.forEach(this::addRenderableWidget);
 
         recipeList = new RecipeList(minecraft, listW, listBot - listTop, listTop);
         addWidget(recipeList);
@@ -101,6 +106,7 @@ public class SimpleRecipesScreen extends Screen {
         // Lo que queda recortado fuera del panel no muestra tooltip
         if (detailScroll.finish(stack) && !detailScroll.contains(mx, my)) { hoveredIngredient = null; hoveringResult = false; jeiHoveredItem = ItemStack.EMPTY; }
         super.render(stack, mx, my, delta);
+        RecipeLockState.renderTooltips(this, stack, filterButtons, mx, my);
         if (hoveredIngredient != null)
             renderTooltip(stack, hoveredIngredient, hoveredIngX, hoveredIngY);
         else if (hoveringResult && selected != null)
@@ -162,17 +168,7 @@ public class SimpleRecipesScreen extends Screen {
         ty += font.lineHeight + 4;
 
         // ── Estado ────────────────────────────────────────────────────────────
-        if (selected.isUnlocked()) {
-            MutableComponent s = Component.literal(ICON_OK).withStyle(ChatFormatting.GREEN)
-                    .append(Component.translatable("endereyesgui.enchantments.detail.unlocked")
-                            .withStyle(ChatFormatting.GREEN));
-            drawCenteredString(stack, font, s, cx, ty, 0xFFFFFF);
-        } else {
-            MutableComponent s = Component.literal(ICON_ERR).withStyle(ChatFormatting.RED)
-                    .append(Component.translatable("endereyesgui.enchantments.detail.locked")
-                            .withStyle(ChatFormatting.RED));
-            drawCenteredString(stack, font, s, cx, ty, 0xFFFFFF);
-        }
+        lockState(selected).drawDetailStatus(stack, font, cx, ty);
         ty += font.lineHeight + 6;
         // Receta bloqueada por una quest: cuál es (enlace que la abre) y qué le falta
         if (!selected.isUnlocked()) ty = QuestLockInfo.render(stack, font, selected.getRecipeId(), cx, ty, pw - PAD * 2, mx, my);
@@ -264,6 +260,11 @@ public class SimpleRecipesScreen extends Screen {
 
     // ── Lista ─────────────────────────────────────────────────────────────────
 
+    /** Estado de la receta: desbloqueada, desbloqueable ya, o bloqueada por una quest (o por lo que pide). */
+    private static RecipeLockState lockState(SimpleRecipeData d) {
+        return RecipeLockState.of(d.isUnlocked(), !d.isUnlocked() && QuestLockInfo.isQuestLocked(d.getRecipeId()));
+    }
+
     private class RecipeList extends ObjectSelectionList<RecipeList.Entry> {
         RecipeList(Minecraft mc, int width, int height, int top) {
             super(mc, width, height, top, top + height, 14);
@@ -271,7 +272,7 @@ public class SimpleRecipesScreen extends Screen {
             setRenderBackground(false);
             setRenderTopAndBottom(false);
             for (SimpleRecipeData d : recipes) {
-                if (searchTerm.isEmpty() || d.getResult().getHoverName().getString().toLowerCase().contains(searchTerm)) {
+                if (lockState(d).isShown() && (searchTerm.isEmpty() || d.getResult().getHoverName().getString().toLowerCase().contains(searchTerm))) {
                     addEntry(new Entry(d));
                 }
             }
@@ -310,20 +311,18 @@ public class SimpleRecipesScreen extends Screen {
                 if (sel)          fill(stack, left - 1, top - 1, left + width - 3, top + height + 1, C_SELECTED);
                 else if (hovered) fill(stack, left - 1, top - 1, left + width - 3, top + height + 1, C_HOVER);
 
-                String icon = data.isUnlocked() ? ICON_OK : ICON_ERR;
-                // Bloqueada por una quest (o por lo que pide la quest: portal del Nether / End...): candado
-                if (!data.isUnlocked() && QuestLockInfo.isQuestLocked(data.getRecipeId()))
-                    QuestLockInfo.drawLock(stack, left + 2, top + 1, font.lineHeight);
-                else
-                    font.drawShadow(stack, icon, left + 2, top + 2, data.isUnlocked() ? C_UNLOCKED : C_LOCKED);
-                int nameX = left + 2 + font.width(icon);
+                RecipeLockState state = lockState(data);
+                // Tick verde, X amarilla (desbloqueable ya) o candado (le falta una quest o lo que pide)
+                state.drawListIcon(stack, font, left, top, true);
+                int iconW = RecipeLockState.iconWidth(font);
+                int nameX = left + 2 + iconW;
                 // Limpiar códigos §X del nombre para forzar nuestro color
                 String rawName = net.minecraft.ChatFormatting.stripFormatting(
                         data.getResult().getHoverName().getString());
                 if (rawName == null) rawName = data.getResult().getHoverName().getString();
                 font.drawShadow(stack, font.plainSubstrByWidth(rawName,
-                        width - font.width(icon) - 8), nameX, top + 2,
-                        data.isUnlocked() ? 0xEE88FF : 0x996699);
+                        width - iconW - 8), nameX, top + 2,
+                        state.nameColor());
             }
         }
     }

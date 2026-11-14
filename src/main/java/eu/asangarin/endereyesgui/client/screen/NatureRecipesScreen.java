@@ -29,8 +29,6 @@ public class NatureRecipesScreen extends Screen {
     private static final int   BOTTOM_H      = 28;
     private static final int   PAD           = 8;
 
-    private static final int C_UNLOCKED   = 0xFF55FF55;
-    private static final int C_LOCKED     = 0xFFFF5555;
     private static final int C_LIST_BG    = 0xAA080018;
     private static final int C_PANEL_BG   = 0xCC100030;
     private static final int C_PANEL_BORD = 0xFF8800CC;
@@ -41,8 +39,6 @@ public class NatureRecipesScreen extends Screen {
     private static final int C_TAB_IDLE   = 0x66330066;
     private static final int C_TAB_BORD   = 0xFF8800CC;
 
-    private static final String ICON_OK  = "\u2714 ";
-    private static final String ICON_ERR = "\u2718 ";
 
     private static final String TAB_EXPLORER = "explorer";
     private static final String TAB_DRUID    = "druid";
@@ -50,6 +46,7 @@ public class NatureRecipesScreen extends Screen {
 
     private RecipeList recipeList;
     private EditBox searchBox;
+    private java.util.List<RecipeLockState.FilterButton> filterButtons = new java.util.ArrayList<>();
     private String searchTerm = "";
     private SimpleRecipeData selected = null;
     /** Scroll del panel de detalle (cuando no cabe todo). */
@@ -77,7 +74,7 @@ public class NatureRecipesScreen extends Screen {
         int listTop = TITLE_H + TAB_H + 18;
         int listBot = height - BOTTOM_H;
 
-        searchBox = new EditBox(font, 2, TITLE_H + TAB_H + 2, listW - 4, 14,
+        searchBox = new EditBox(font, 2, TITLE_H + TAB_H + 2, listW - 4 - RecipeLockState.BUTTONS_W, 14,
                 Component.translatable("endereyesgui.search"));
         searchBox.setMaxLength(50);
         searchBox.setResponder(text -> {
@@ -85,6 +82,10 @@ public class NatureRecipesScreen extends Screen {
             rebuildList(listW, listTop, listBot);
         });
         addRenderableWidget(searchBox);
+        // Filtro por estado (desbloqueada / desbloqueable / bloqueada), a la derecha de la busqueda
+        filterButtons = RecipeLockState.createButtons(font, listW - 2 - RecipeLockState.BUTTONS_W + RecipeLockState.BUTTON_GAP, TITLE_H + TAB_H + 2, 14,
+                () -> { selected = null; rebuildList(listW, listTop, listBot); });
+        filterButtons.forEach(this::addRenderableWidget);
 
         recipeList = new RecipeList(minecraft, listW, listBot - listTop, listTop);
         addWidget(recipeList);
@@ -158,6 +159,7 @@ public class NatureRecipesScreen extends Screen {
         // Lo que queda recortado fuera del panel no muestra tooltip
         if (detailScroll.finish(stack) && !detailScroll.contains(mx, my)) { hoveredIngredient = null; hoveringResult = false; jeiHoveredItem = ItemStack.EMPTY; }
         super.render(stack, mx, my, delta);
+        RecipeLockState.renderTooltips(this, stack, filterButtons, mx, my);
 
         if (hoveredIngredient != null)
             renderTooltip(stack, hoveredIngredient, hoveredIngX, hoveredIngY);
@@ -222,17 +224,7 @@ public class NatureRecipesScreen extends Screen {
                     Component.literal(tierName).withStyle(s -> s.withColor(tc)), cx, ty, 0xFFFFFF);
             ty += font.lineHeight + 4;
         }
-        if (selected.isUnlocked()) {
-            drawCenteredString(stack, font,
-                    Component.literal(ICON_OK).withStyle(ChatFormatting.GREEN)
-                    .append(Component.translatable("endereyesgui.enchantments.detail.unlocked").withStyle(ChatFormatting.GREEN)),
-                    cx, ty, 0xFFFFFF);
-        } else {
-            drawCenteredString(stack, font,
-                    Component.literal(ICON_ERR).withStyle(ChatFormatting.RED)
-                    .append(Component.translatable("endereyesgui.enchantments.detail.locked").withStyle(ChatFormatting.RED)),
-                    cx, ty, 0xFFFFFF);
-        }
+        lockState(selected).drawDetailStatus(stack, font, cx, ty);
         ty += font.lineHeight + 8;
         // Receta bloqueada por una quest: cuál es (enlace que la abre) y qué le falta
         if (!selected.isUnlocked()) ty = QuestLockInfo.render(stack, font, selected.getRecipeId(), cx, ty, pw - PAD * 2, mx, my);
@@ -305,6 +297,11 @@ public class NatureRecipesScreen extends Screen {
 
     @Override public boolean isPauseScreen() { return false; }
 
+    /** Estado de la receta: desbloqueada, desbloqueable ya, o bloqueada por una quest (o por lo que pide). */
+    private static RecipeLockState lockState(SimpleRecipeData d) {
+        return RecipeLockState.of(d.isUnlocked(), !d.isUnlocked() && QuestLockInfo.isQuestLocked(d.getRecipeId()));
+    }
+
     private class RecipeList extends ObjectSelectionList<RecipeList.Entry> {
         RecipeList(Minecraft mc, int width, int height, int top) {
             super(mc, width, height, top, top + height, 14);
@@ -315,7 +312,7 @@ public class NatureRecipesScreen extends Screen {
                 String name = net.minecraft.ChatFormatting.stripFormatting(
                         d.getResult().getHoverName().getString());
                 if (name == null) name = d.getResult().getHoverName().getString();
-                if (searchTerm.isEmpty() || name.toLowerCase().contains(searchTerm))
+                if (lockState(d).isShown() && (searchTerm.isEmpty() || name.toLowerCase().contains(searchTerm)))
                     addEntry(new Entry(d));
             }
         }
@@ -352,18 +349,16 @@ public class NatureRecipesScreen extends Screen {
                 boolean sel = RecipeList.this.getSelected() == this;
                 if (sel)          fill(stack, left - 1, top - 1, left + width - 3, top + height + 1, C_SELECTED);
                 else if (hovered) fill(stack, left - 1, top - 1, left + width - 3, top + height + 1, C_HOVER);
-                String icon = data.isUnlocked() ? ICON_OK : ICON_ERR;
-                // Bloqueada por una quest (o por lo que pide la quest: portal del Nether / End...): candado
-                if (!data.isUnlocked() && QuestLockInfo.isQuestLocked(data.getRecipeId()))
-                    QuestLockInfo.drawLock(stack, left + 2, top + 1, font.lineHeight);
-                else
-                    font.drawShadow(stack, icon, left + 2, top + 2, data.isUnlocked() ? C_UNLOCKED : C_LOCKED);
-                int nameX = left + 2 + font.width(icon);
+                RecipeLockState state = lockState(data);
+                // Tick verde, X amarilla (desbloqueable ya) o candado (le falta una quest o lo que pide)
+                state.drawListIcon(stack, font, left, top, true);
+                int iconW = RecipeLockState.iconWidth(font);
+                int nameX = left + 2 + iconW;
                 String rawName = net.minecraft.ChatFormatting.stripFormatting(
                         data.getResult().getHoverName().getString());
                 if (rawName == null) rawName = data.getResult().getHoverName().getString();
-                font.drawShadow(stack, font.plainSubstrByWidth(rawName, width - font.width(icon) - 8),
-                        nameX, top + 2, data.isUnlocked() ? 0xEE88FF : 0x996699);
+                font.drawShadow(stack, font.plainSubstrByWidth(rawName, width - iconW - 8),
+                        nameX, top + 2, state.nameColor());
             }
         }
     }
