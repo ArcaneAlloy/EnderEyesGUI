@@ -157,6 +157,8 @@
   "endereyesgui.filter.locked": "Locked",
   "endereyesgui.filter.shown": "shown (click to hide)",
   "endereyesgui.filter.hidden": "hidden (click to show)",
+  "endereyesgui.jei.evolutions": "Blacksmith Evolutions",
+  "endereyesgui.jei.evolutions.click": "Click to see its evolution tree",
   "endereyesgui.warlock.tab.enchantments": "Enchantments",
   "endereyesgui.warlock.tab.potions": "Potions",
   "endereyesgui.warlock.potions.hint": "Click a potion to see its status.",

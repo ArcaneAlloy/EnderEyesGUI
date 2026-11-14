@@ -5,6 +5,8 @@ import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.recipe.RecipeIngredientRole;
+import mezz.jei.api.registration.IRecipeCategoryRegistration;
+import mezz.jei.api.registration.IRecipeRegistration;
 import mezz.jei.api.runtime.IJeiRuntime;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -28,8 +30,34 @@ public class JeiCompat implements IModPlugin {
     @Nullable private static KeyMapping showUsesKey    = null;
     private static boolean keysMapped = false;
 
+    /** Árbol de evoluciones del Blacksmith; se construye con las recetas del cliente al cargar JEI. */
+    @Nullable private static EvolutionTree evolutionTree = null;
+
     @Override
     public ResourceLocation getPluginUid() { return PLUGIN_ID; }
+
+    @Override
+    public void registerCategories(IRecipeCategoryRegistration registration) {
+        evolutionTree = null;
+        try {
+            var level = Minecraft.getInstance().level;
+            if (level == null) return;
+            evolutionTree = EvolutionTree.build(level.getRecipeManager());
+            registration.addRecipeCategories(new EvolutionCategory(
+                    registration.getJeiHelpers().getGuiHelper(), evolutionTree));
+        } catch (Throwable t) {
+            evolutionTree = null;
+            LOGGER.warn("[JEI] Blacksmith evolutions not available: {}", t.toString());
+        }
+    }
+
+    @Override
+    public void registerRecipes(IRecipeRegistration registration) {
+        if (evolutionTree == null) return;
+        var pages = evolutionTree.pages();
+        registration.addRecipes(EvolutionCategory.TYPE, pages);
+        LOGGER.info("[JEI] Blacksmith evolutions: {} pages", pages.size());
+    }
 
     @Override
     public void onRuntimeAvailable(IJeiRuntime runtime) {

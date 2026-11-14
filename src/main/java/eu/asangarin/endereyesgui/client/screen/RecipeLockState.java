@@ -10,9 +10,14 @@ import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -26,9 +31,9 @@ import java.util.List;
  * El filtro es comun a todas las pantallas de recetas y se mantiene mientras dure la partida.
  */
 public enum RecipeLockState {
-	UNLOCKED("✔ ", 0xFF55FF55, ChatFormatting.GREEN, "endereyesgui.enchantments.detail.unlocked", "endereyesgui.filter.unlocked"),
-	UNLOCKABLE("✘ ", 0xFFFFDD33, ChatFormatting.YELLOW, "endereyesgui.enchantments.detail.unlockable", "endereyesgui.filter.unlockable"),
-	LOCKED("✘ ", 0xFFFF5555, ChatFormatting.RED, "endereyesgui.enchantments.detail.locked", "endereyesgui.filter.locked");
+	UNLOCKED("\u2714 ", 0xFF55FF55, ChatFormatting.GREEN, "endereyesgui.enchantments.detail.unlocked", "endereyesgui.filter.unlocked"),
+	UNLOCKABLE("\u2718 ", 0xFFFFDD33, ChatFormatting.YELLOW, "endereyesgui.enchantments.detail.unlockable", "endereyesgui.filter.unlockable"),
+	LOCKED("\u2718 ", 0xFFFF5555, ChatFormatting.RED, "endereyesgui.enchantments.detail.locked", "endereyesgui.filter.locked");
 
 	/** Texto del icono (el candado ocupa el mismo ancho para que los nombres queden alineados). */
 	private final String icon;
@@ -47,6 +52,32 @@ public enum RecipeLockState {
 
 	public static RecipeLockState of(boolean unlocked, boolean locked) {
 		return unlocked ? UNLOCKED : locked ? LOCKED : UNLOCKABLE;
+	}
+
+	/**
+	 * Estado de un objeto a partir de las recetas que lo dan, con el libro de recetas del cliente (las del Blacksmith
+	 * se desbloquean con awardRecipes, que se sincroniza): desbloqueado si alguna lo está; si no, candado si todas
+	 * dependen de una quest. null si no hay recetas (el objeto no sale del Blacksmith).
+	 */
+	@Nullable
+	public static RecipeLockState ofRecipes(Collection<ResourceLocation> recipeIds) {
+		LocalPlayer player = Minecraft.getInstance().player;
+		if (player == null || recipeIds.isEmpty()) return null;
+		boolean allQuest = true;
+		for (ResourceLocation id : recipeIds) {
+			if (player.getRecipeBook().contains(id)) return UNLOCKED;
+			if (!QuestLockInfo.isQuestLocked(id)) allQuest = false;
+		}
+		return allQuest ? LOCKED : UNLOCKABLE;
+	}
+
+	/** Color del estado (flechas del árbol de evoluciones). */
+	public int color() { return color; }
+
+	/** Línea de tooltip: "✔ RECETA DESBLOQUEADA", "✘ RECETA DESBLOQUEABLE" o "RECETA BLOQUEADA". */
+	public Component tooltipLine() {
+		MutableComponent text = Component.translatable(detailKey).withStyle(format);
+		return this == LOCKED ? text : Component.literal(icon).withStyle(format).append(text);
 	}
 
 	// ── Filtro ────────────────────────────────────────────────────────────────
