@@ -25,9 +25,9 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.TooltipFlag;
 import net.minecraftforge.client.event.ScreenEvent;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -153,7 +153,10 @@ public class EvolutionCategory implements IRecipeCategory<EvolutionTree.Recipe> 
 		try {
 			stack.pushPose();
 			stack.translate(VIEW_X - recipe.scrollX, VIEW_Y - recipe.scrollY, 0);
-			drawTree(stack, font, recipe, layout, hit(recipe, mouseX, mouseY));
+			Hit hover = hit(recipe, mouseX, mouseY);
+			drawTree(stack, font, recipe, layout, hover);
+			// El tooltip de un objeto se pinta al final del frame con el propio objeto (como JEI en sus casillas)
+			if (hover != null && hover.part() == Part.SLOT) Input.itemTooltip(hover.node().stack(), itemTooltipExtras(recipe, hover.node()));
 			drawItems(stack, mc, layout);
 			stack.popPose();
 		} finally {
@@ -279,19 +282,24 @@ public class EvolutionCategory implements IRecipeCategory<EvolutionTree.Recipe> 
 				return List.of(Component.translatable("endereyesgui.jei.evolutions.repeated").withStyle(ChatFormatting.GRAY));
 			}
 			default -> {
-				Minecraft mc = Minecraft.getInstance();
-				List<Component> lines = new ArrayList<>(hit.node().stack().getTooltipLines(mc.player,
-						mc.options.advancedItemTooltips ? TooltipFlag.Default.ADVANCED : TooltipFlag.Default.NORMAL));
-				RecipeLockState state = state(item);
-				if (state != null) {
-					lines.add(state.tooltipLine());
-					if (state.hintLine() != null) lines.add(state.hintLine());
-				}
-				if (hit.node().repeated()) lines.add(Component.translatable("endereyesgui.jei.evolutions.repeated").withStyle(ChatFormatting.GRAY));
-				if (item != recipe.root()) lines.add(Component.translatable("endereyesgui.jei.evolutions.click").withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC));
-				return lines;
+				// Los objetos no van por aquí: JEI pintaría solo texto y se perderían los componentes que otros mods
+				// añaden al tooltip (la línea de atributos con iconos...). Se pintan en Input.onRenderPost.
+				return List.of();
 			}
 		}
+	}
+
+	/** Líneas que el árbol añade al final del tooltip de un objeto: estado, cómo se desbloquea y qué hace el clic. */
+	private List<Component> itemTooltipExtras(EvolutionTree.Recipe recipe, EvolutionTree.Node node) {
+		List<Component> lines = new ArrayList<>();
+		RecipeLockState state = state(node.item());
+		if (state != null) {
+			lines.add(state.tooltipLine());
+			if (state.hintLine() != null) lines.add(state.hintLine());
+		}
+		if (node.repeated()) lines.add(Component.translatable("endereyesgui.jei.evolutions.repeated").withStyle(ChatFormatting.GRAY));
+		if (node.item() != recipe.root()) lines.add(Component.translatable("endereyesgui.jei.evolutions.click").withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC));
+		return lines;
 	}
 
 	// ── Teclas (R / U sobre un objeto) ────────────────────────────────────────
@@ -328,6 +336,34 @@ public class EvolutionCategory implements IRecipeCategory<EvolutionTree.Recipe> 
 	 */
 	public static final class Input {
 		private static boolean registered = false;
+
+		/** Tooltip de objeto pendiente de pintar al final del frame. */
+		@Nullable private static ItemStack tooltipStack = null;
+		private static List<Component> tooltipExtras = List.of();
+
+		static void itemTooltip(ItemStack stack, List<Component> extras) {
+			tooltipStack = stack;
+			tooltipExtras = extras;
+		}
+
+		/**
+		 * Tooltip del objeto bajo el ratón, con la misma llamada que usa JEI para sus casillas (la de Forge que recibe
+		 * el ItemStack): así los mods de tooltips añaden sus componentes, como la línea de atributos con iconos.
+		 * Prioridad mínima para quedar encima de todo lo que se pinte después de la pantalla.
+		 */
+		@SubscribeEvent(priority = EventPriority.LOWEST)
+		public static void onRenderPost(ScreenEvent.Render.Post event) {
+			ItemStack stack = tooltipStack;
+			List<Component> extras = tooltipExtras;
+			tooltipStack = null;
+			tooltipExtras = List.of();
+			if (stack == null || stack.isEmpty()) return;
+			Screen screen = event.getScreen();
+			List<Component> lines = new ArrayList<>(screen.getTooltipFromItem(stack));
+			lines.addAll(extras);
+			screen.renderTooltip(event.getPoseStack(), lines, stack.getTooltipImage(), event.getMouseX(), event.getMouseY(),
+					Minecraft.getInstance().font, stack);
+		}
 
 		/** Árbol dibujado: dónde está la receta en pantalla y cuándo se dibujó. */
 		private record Drawn(EvolutionTree.Recipe recipe, EvolutionCategory category, Screen screen, double x, double y, long time) {
