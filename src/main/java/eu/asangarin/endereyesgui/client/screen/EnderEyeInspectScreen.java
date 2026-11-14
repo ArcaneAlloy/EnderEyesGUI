@@ -300,4 +300,8 @@ public class EnderEyeInspectScreen extends Screen {
 		stack.popPose();
 		com.mojang.blaze3d.systems.RenderSystem.enableDepthTest();
 	}
+
+	/** No pausa el juego (como el resto de pantallas de Ender Eyes GUI): en un jugador, el mundo seguía parado. */
+	@Override
+	public boolean isPauseScreen() { return false; }
 }

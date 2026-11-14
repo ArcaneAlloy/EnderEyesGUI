@@ -197,4 +197,8 @@ public class EnderEyesScreen extends Screen {
 		this.renderBackground(stack);
 		super.render(stack, x, y, delta);
 	}
+
+	/** No pausa el juego (como el resto de pantallas de Ender Eyes GUI): en un jugador, el mundo seguía parado. */
+	@Override
+	public boolean isPauseScreen() { return false; }
 }
