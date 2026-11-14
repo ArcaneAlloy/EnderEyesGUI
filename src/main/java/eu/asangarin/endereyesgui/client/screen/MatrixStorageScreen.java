@@ -52,6 +52,8 @@ public class MatrixStorageScreen extends Screen {
     }
 
     private final int eyesEarned;
+    /** Scroll del panel: en resoluciones bajas los tiers no caben y se salían por debajo. */
+    private final PanelScroll panelScroll = new PanelScroll();
 
     public MatrixStorageScreen(int eyesEarned) {
         super(Component.empty());
@@ -77,8 +79,16 @@ public class MatrixStorageScreen extends Screen {
                 width / 2, 6, 0xFFFFFF);
 
         renderPanel(stack, mx, my);
+        panelScroll.finish(stack);
 
         super.render(stack, mx, my, delta);
+    }
+
+    /** Rueda sobre el panel: lo desplaza si no cabe todo. */
+    @Override
+    public boolean mouseScrolled(double mx, double my, double delta) {
+        if (panelScroll.scroll(mx, my, delta)) return true;
+        return super.mouseScrolled(mx, my, delta);
     }
 
     private void renderPanel(PoseStack stack, int mx, int my) {
@@ -95,8 +105,10 @@ public class MatrixStorageScreen extends Screen {
         fill(stack, px,          py,          px + 1,      py + ph,     C_PANEL_BORD);
         fill(stack, px + pw - 1, py,          px + pw,     py + ph,     C_PANEL_BORD);
 
-        // Con 5 tiers (y la capacidad de cada uno) el contenido es más alto: espacios algo más justos
-        int ty = py + PAD;
+        // Con 5 tiers (y la capacidad de cada uno) el contenido es más alto: espacios algo más justos.
+        // Si aun así no cabe (resoluciones bajas), el contenido se recorta al panel y se desplaza con la rueda.
+        int scroll = panelScroll.begin(px, py, pw, ph, this);
+        int ty = py + PAD - scroll;
 
         // ── Ojos obtenidos ───────────────────────────────────────────────────
         Component eyesLine = Component.translatable("endereyesgui.matrix.eyes_obtained", eyesEarned)
@@ -143,7 +155,8 @@ public class MatrixStorageScreen extends Screen {
         // Alto de cada fila: el que sobre en el panel repartido entre los tiers (mínimo 20, máximo 30),
         // con una línea separadora entre uno y otro
         int rows = TIER_THRESHOLDS.length;
-        int rowH = Math.max(22, Math.min(34, (py + ph - 6 - ty) / rows));
+        // (con el hueco calculado sin el scroll, para que las filas no cambien de alto al desplazar)
+        int rowH = Math.max(22, Math.min(34, (py + ph - 6 - (ty + scroll)) / rows));
         // Hueco igual encima y debajo del texto (19 = nombre + capacidad, 1 = línea separadora)
         int rowPad = Math.max(1, (rowH - 19 - 1) / 2);
 
@@ -173,6 +186,7 @@ public class MatrixStorageScreen extends Screen {
 
             ty += rowH;
         }
+        panelScroll.contentEnd(ty);
     }
 
     /** Nombre de la fila: "Tier 0" + nombre del Actuator, o el nombre del Storage Stabilizer (ya lleva su tier). */
