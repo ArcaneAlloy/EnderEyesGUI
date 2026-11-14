@@ -71,6 +71,22 @@ public enum RecipeLockState {
 		return allQuest ? LOCKED : UNLOCKABLE;
 	}
 
+	/** Quest que desbloquea alguna de estas recetas (null si ninguna depende de una quest). */
+	@Nullable
+	public static String questFor(Collection<ResourceLocation> recipeIds) {
+		return QuestLockInfo.questForAny(recipeIds);
+	}
+
+	/** Tooltip del candado: la quest como en el panel de la receta (censurada si aún no se puede ver). */
+	public static List<Component> questTooltip(String quest) {
+		return QuestLockInfo.questTooltip(quest, Component.translatable("endereyesgui.jei.evolutions.quest_click"));
+	}
+
+	/** Abre la quest si ya está disponible; al cerrarla se vuelve a parent. */
+	public static boolean openQuest(String quest, Screen parent) {
+		return QuestLockInfo.openQuest(quest, parent);
+	}
+
 	/** Color del estado (flechas del árbol de evoluciones). */
 	public int color() { return color; }
 

@@ -13,6 +13,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -24,27 +25,53 @@ import java.util.Set;
 
 /**
  * Árbol de evoluciones del Blacksmith (Anna): cada mejora (blacksmith_upgrade) es una flecha de su base a su resultado.
- * No es un árbol puro (un objeto puede salir de varias bases), así que se muestra por objeto: de dónde viene y dos
- * niveles de evoluciones, repartidos en páginas de JEI.
+ * Para cada objeto se arma su árbol completo hacia delante (todas las mejoras posibles), más sus bases a la izquierda.
+ * <p>
+ * No es un árbol puro (un objeto puede salir de varias bases): cada objeto se despliega una sola vez, bajo su aparición
+ * menos profunda; si vuelve a aparecer en otra rama, sale como hoja "repetida" (sus mejoras están en la otra rama).
  */
 public final class EvolutionTree {
 
-	/** Filas de evoluciones por página. */
-	public static final int ROWS = 6;
-	/** Bases que caben en la columna izquierda; si hay más, la última casilla va rotando entre las que sobran. */
-	public static final int MAX_PARENTS = ROWS;
+	/** Separación entre columnas (casilla, icono de estado y flecha) y entre filas. */
+	public static final int COL_W = 44;
+	public static final int ROW_H = 20;
+	/** Margen: a la izquierda va el icono de estado de la primera columna. */
+	public static final int PAD_X = 14;
+	public static final int PAD_Y = 3;
 
-	/** Una evolución directa del objeto y las suyas (nietos) que caben en esta página. */
-	public record Branch(Item child, List<Item> grandchildren) {
-		public int rows() { return Math.max(1, grandchildren.size()); }
+	/**
+	 * Casilla del árbol. repeated: el objeto ya está desplegado en otra rama de este árbol y aquí no se repiten sus
+	 * mejoras. base: es una de las bases del objeto raíz (columna de la izquierda).
+	 */
+	public record Node(Item item, int x, int y, boolean repeated, boolean base) {
+		public ItemStack stack() { return new ItemStack(item); }
 	}
 
-	/** Una página de JEI: el objeto, sus bases y las ramas que caben. */
-	public record Page(Item focus, List<Item> parents, List<Branch> branches, int page, int pages) {
-		public int rows() {
-			int r = 0;
-			for (Branch b : branches) r += b.rows();
-			return r;
+	/** Flecha de la casilla from a la casilla to (índices en nodes). */
+	public record Edge(int from, int to) {}
+
+	/** Árbol ya colocado de un objeto. */
+	public record Layout(List<Node> nodes, List<Edge> edges, int root, int width, int height) {}
+
+	/** "Receta" de JEI: el árbol de un objeto, con su posición de scroll. */
+	public static final class Recipe {
+		private final EvolutionTree tree;
+		private final Item root;
+		private Layout layout;
+		public double scrollX, scrollY;
+
+		Recipe(EvolutionTree tree, Item root) {
+			this.tree = tree;
+			this.root = root;
+		}
+
+		public Item root() { return root; }
+		public List<Item> bases() { return tree.sortedList(tree.parents.get(root)); }
+
+		/** Se coloca la primera vez que se dibuja (hay cientos de objetos y la mayoría nunca se abren). */
+		public Layout layout() {
+			if (layout == null) layout = tree.layout(root);
+			return layout;
 		}
 	}
 
@@ -76,51 +103,77 @@ public final class EvolutionTree {
 		return producers.getOrDefault(item, List.of());
 	}
 
-	/** Todas las páginas: una o varias por cada objeto que forma parte de alguna mejora. */
-	public List<Page> pages() {
+	/** Un árbol por cada objeto que forma parte de alguna mejora. */
+	public List<Recipe> recipes() {
 		Set<Item> nodes = new LinkedHashSet<>();
 		nodes.addAll(children.keySet());
 		nodes.addAll(parents.keySet());
 		List<Item> sorted = new ArrayList<>(nodes);
 		sorted.sort(order());
-
-		List<Page> pages = new ArrayList<>();
-		for (Item item : sorted) pages.addAll(pagesFor(item));
-		return pages;
+		List<Recipe> list = new ArrayList<>(sorted.size());
+		for (Item item : sorted) list.add(new Recipe(this, item));
+		return list;
 	}
 
-	private List<Page> pagesFor(Item item) {
-		List<Item> parentList = sortedList(parents.get(item));
+	// ── Colocación ────────────────────────────────────────────────────────────
 
-		// Ramas completas; luego se reparten en páginas de ROWS filas. Una rama más larga que una página se parte y su
-		// evolución directa se repite al principio de la siguiente.
-		List<List<Branch>> chunks = new ArrayList<>();
-		List<Branch> current = new ArrayList<>();
-		int used = 0;
-		for (Item child : sortedList(children.get(item))) {
-			List<Item> grand = sortedList(children.get(child));
-			int idx = 0;
-			do {
-				if (used == ROWS) { chunks.add(current); current = new ArrayList<>(); used = 0; }
-				int take = grand.isEmpty() ? 0 : Math.min(grand.size() - idx, ROWS - used);
-				// Que una rama corta no se parta si cabe entera en la página siguiente
-				if (idx == 0 && grand.size() > take && grand.size() <= ROWS && used > 0) {
-					chunks.add(current); current = new ArrayList<>(); used = 0;
-					take = grand.size();
-				}
-				current.add(new Branch(child, List.copyOf(grand.subList(idx, idx + take))));
-				used += Math.max(1, take);
-				idx += take;
-			} while (idx < grand.size());
+	private Layout layout(Item root) {
+		// Cada objeto se despliega bajo su primera aparición en anchura (la menos profunda)
+		Map<Item, Item> home = new HashMap<>();
+		home.put(root, null);
+		ArrayDeque<Item> queue = new ArrayDeque<>();
+		queue.add(root);
+		while (!queue.isEmpty()) {
+			Item n = queue.poll();
+			for (Item c : sortedList(children.get(n))) {
+				if (!home.containsKey(c)) { home.put(c, n); queue.add(c); }
+			}
 		}
-		if (!current.isEmpty() || chunks.isEmpty()) chunks.add(current);
 
-		List<Page> result = new ArrayList<>();
-		for (int i = 0; i < chunks.size(); i++) {
-			result.add(new Page(item, parentList, chunks.get(i), i + 1, chunks.size()));
+		List<Node> nodes = new ArrayList<>();
+		List<Edge> edges = new ArrayList<>();
+		List<Item> bases = sortedList(parents.get(root));
+		int rootCol = bases.isEmpty() ? 0 : 1;
+
+		int[] row = {0};
+		int[] maxCol = {rootCol};
+		int rootIdx = place(root, rootCol, false, home, nodes, edges, row, maxCol);
+
+		for (int i = 0; i < bases.size(); i++) {
+			nodes.add(new Node(bases.get(i), PAD_X, PAD_Y + i * ROW_H, false, true));
+			edges.add(new Edge(nodes.size() - 1, rootIdx));
 		}
-		return result;
+
+		int rows = Math.max(row[0], bases.size());
+		int width = PAD_X + maxCol[0] * COL_W + 18 + 4;
+		int height = PAD_Y + rows * ROW_H + 2;
+		return new Layout(Collections.unmodifiableList(nodes), Collections.unmodifiableList(edges), rootIdx, width, height);
 	}
+
+	/**
+	 * Coloca el objeto en la fila actual y sus mejoras a la derecha, empezando en la misma fila (el árbol queda alineado
+	 * arriba, con la raíz arriba a la izquierda). Devuelve su índice.
+	 */
+	private int place(Item item, int col, boolean repeated, Map<Item, Item> home,
+					  List<Node> nodes, List<Edge> edges, int[] row, int[] maxCol) {
+		maxCol[0] = Math.max(maxCol[0], col);
+		List<Item> kids = repeated ? List.of() : sortedList(children.get(item));
+		int idx = nodes.size();
+		nodes.add(new Node(item, PAD_X + col * COL_W, PAD_Y + row[0] * ROW_H,
+				repeated && !sortedList(children.get(item)).isEmpty(), false));
+		if (kids.isEmpty()) {
+			row[0]++;
+			return idx;
+		}
+		for (Item kid : kids) {
+			boolean expandHere = home.get(kid) == item;
+			int k = place(kid, col + 1, !expandHere, home, nodes, edges, row, maxCol);
+			edges.add(new Edge(idx, k));
+		}
+		return idx;
+	}
+
+	// ── Orden ─────────────────────────────────────────────────────────────────
 
 	private List<Item> sortedList(Set<Item> items) {
 		if (items == null || items.isEmpty()) return List.of();

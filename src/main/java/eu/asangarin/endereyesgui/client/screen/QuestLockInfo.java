@@ -323,6 +323,80 @@ final class QuestLockInfo {
         return out;
     }
 
+    // ── Tooltip y apertura de la quest sin panel (árbol de evoluciones en JEI) ──
+
+    /** Quest de la primera receta de la lista que dependa de una (null si ninguna). */
+    @Nullable
+    static String questForAny(java.util.Collection<ResourceLocation> recipeIds) {
+        for (ResourceLocation id : recipeIds) {
+            String quest = questFor(id);
+            if (quest != null) return quest;
+        }
+        return null;
+    }
+
+    /** ¿La quest ya se puede abrir? Igual que en el panel: sin requisitos pendientes y abrible. */
+    static boolean isQuestOpenable(String quest) {
+        if (!lookup()) return false;
+        try {
+            @SuppressWarnings("unchecked")
+            List<Component> requirements = (List<Component>) questRequirements.invoke(null, quest);
+            return (requirements == null || requirements.isEmpty()) && canOpen(quest);
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    /**
+     * Las mismas líneas que el panel de la receta, para un tooltip: cabecera, la quest (o su nombre censurado si aún
+     * está bloqueada), lo que le falta y, si se puede abrir, el aviso de clic. Vacío si no hay datos de la quest.
+     */
+    @SuppressWarnings("unchecked")
+    static List<Component> questTooltip(String quest, Component clickHint) {
+        List<Component> lines = new java.util.ArrayList<>();
+        if (!lookup()) return lines;
+        Component title;
+        List<Component> requirements;
+        try {
+            title = (Component) questTitle.invoke(null, quest);
+            requirements = (List<Component>) questRequirements.invoke(null, quest);
+        } catch (Throwable t) {
+            return lines;
+        }
+        if (title == null) return lines;
+        lines.add(Component.translatable("endereyesgui.recipe.quest_lock").withStyle(ChatFormatting.GRAY));
+        boolean openable = (requirements == null || requirements.isEmpty()) && canOpen(quest);
+        if (openable) {
+            lines.add(Component.literal("\u25B6 " + title.getString()).withStyle(ChatFormatting.AQUA));
+        } else {
+            lines.add(censor(title.getString(), ChatFormatting.GRAY));
+        }
+        if (requirements != null && !requirements.isEmpty()) {
+            lines.add(Component.translatable("endereyesgui.recipe.quest_requires").withStyle(ChatFormatting.GOLD));
+            java.util.Iterator<String> parents = parentQuestIds(quest).iterator();
+            for (Component req : requirements) {
+                String parent = isQuestRequirement(req) && parents.hasNext() ? parents.next() : null;
+                lines.add(censorQuestRequirement(req, parent));
+            }
+        }
+        if (openable) lines.add(clickHint.copy().withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC));
+        return lines;
+    }
+
+    /** Abre la quest si ya se puede (al cerrarla se vuelve a parent). */
+    static boolean openQuest(String quest, Screen parent) {
+        if (!isQuestOpenable(quest) || openQuest == null) return false;
+        try {
+            boolean opened = (Boolean) openQuest.invoke(null, quest, parent);
+            if (opened) {
+                Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.BOOK_PAGE_TURN, 1.0F));
+            }
+            return opened;
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
     /** Clic en el enlace: abre la quest (al cerrarla se vuelve a esta pantalla). */
     static boolean click(double mx, double my, Screen parent) {
         Link hit = null;

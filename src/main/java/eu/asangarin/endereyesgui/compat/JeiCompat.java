@@ -54,9 +54,9 @@ public class JeiCompat implements IModPlugin {
     @Override
     public void registerRecipes(IRecipeRegistration registration) {
         if (evolutionTree == null) return;
-        var pages = evolutionTree.pages();
-        registration.addRecipes(EvolutionCategory.TYPE, pages);
-        LOGGER.info("[JEI] Blacksmith evolutions: {} pages", pages.size());
+        var trees = evolutionTree.recipes();
+        registration.addRecipes(EvolutionCategory.TYPE, trees);
+        LOGGER.info("[JEI] Blacksmith evolutions: {} trees", trees.size());
     }
 
     @Override
