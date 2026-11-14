@@ -157,6 +157,7 @@
   "endereyesgui.filter.locked": "Bloqueadas",
   "endereyesgui.filter.shown": "visibles (clic para ocultar)",
   "endereyesgui.filter.hidden": "ocultas (clic para mostrar)",
+  "endereyesgui.state.unlockable_hint": "Consigue uno de sus ingredientes en tu inventario para desbloquearla",
   "endereyesgui.jei.evolutions": "Evoluciones del Herrero",
   "endereyesgui.jei.evolutions.click": "Clic izquierdo: su árbol de evoluciones · Clic derecho: en qué se mejora",
   "endereyesgui.jei.evolutions.quest_click": "Haz clic en el candado para abrir la quest",

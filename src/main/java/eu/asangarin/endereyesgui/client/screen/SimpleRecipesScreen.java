@@ -312,7 +312,7 @@ public class SimpleRecipesScreen extends Screen {
                 else if (hovered) fill(stack, left - 1, top - 1, left + width - 3, top + height + 1, C_HOVER);
 
                 RecipeLockState state = lockState(data);
-                // Tick verde, X amarilla (desbloqueable ya) o candado (le falta una quest o lo que pide)
+                // Tick verde, ? amarilla (desbloqueable con un ingrediente) o candado (le falta una quest o lo que pide)
                 state.drawListIcon(stack, font, left, top, true);
                 int iconW = RecipeLockState.iconWidth(font);
                 int nameX = left + 2 + iconW;

@@ -25,14 +25,14 @@ import java.util.List;
  * Estado de una receta en las listas de la GUI, con el mismo icono en la lista, en el panel de detalle y en el filtro:
  * <ul>
  *   <li>UNLOCKED: ya desbloqueada (tick verde).</li>
- *   <li>UNLOCKABLE: aún no, pero el jugador puede desbloquearla ya (X amarilla).</li>
+ *   <li>UNLOCKABLE: no está bloqueada; se desbloquea al tener uno de sus ingredientes en el inventario (? amarilla).</li>
  *   <li>LOCKED: le falta algo antes (una quest, Ender Eyes...): candado.</li>
  * </ul>
  * El filtro es comun a todas las pantallas de recetas y se mantiene mientras dure la partida.
  */
 public enum RecipeLockState {
 	UNLOCKED("\u2714 ", 0xFF55FF55, ChatFormatting.GREEN, "endereyesgui.enchantments.detail.unlocked", "endereyesgui.filter.unlocked"),
-	UNLOCKABLE("\u2718 ", 0xFFFFDD33, ChatFormatting.YELLOW, "endereyesgui.enchantments.detail.unlockable", "endereyesgui.filter.unlockable"),
+	UNLOCKABLE("? ", 0xFFFFDD33, ChatFormatting.YELLOW, "endereyesgui.enchantments.detail.unlockable", "endereyesgui.filter.unlockable"),
 	LOCKED("\u2718 ", 0xFFFF5555, ChatFormatting.RED, "endereyesgui.enchantments.detail.locked", "endereyesgui.filter.locked");
 
 	/** Texto del icono (el candado ocupa el mismo ancho para que los nombres queden alineados). */
@@ -87,10 +87,18 @@ public enum RecipeLockState {
 		return QuestLockInfo.openQuest(quest, parent);
 	}
 
+	/** Explicación del estado para el tooltip (solo la ? : cómo se desbloquea); null en los demás. */
+	@Nullable
+	public Component hintLine() {
+		return this == UNLOCKABLE
+				? Component.translatable("endereyesgui.state.unlockable_hint").withStyle(ChatFormatting.GRAY)
+				: null;
+	}
+
 	/** Color del estado (flechas del árbol de evoluciones). */
 	public int color() { return color; }
 
-	/** Línea de tooltip: "✔ RECETA DESBLOQUEADA", "✘ RECETA DESBLOQUEABLE" o "RECETA BLOQUEADA". */
+	/** Línea de tooltip: "✔ RECETA DESBLOQUEADA", "? RECETA DESBLOQUEABLE" o "RECETA BLOQUEADA". */
 	public Component tooltipLine() {
 		MutableComponent text = Component.translatable(detailKey).withStyle(format);
 		return this == LOCKED ? text : Component.literal(icon).withStyle(format).append(text);
@@ -123,7 +131,7 @@ public enum RecipeLockState {
 
 	// ── Panel de detalle ──────────────────────────────────────────────────────
 
-	/** "✔ RECETA DESBLOQUEADA", "✘ RECETA DESBLOQUEABLE" o "[candado] RECETA BLOQUEADA", centrado en cx. */
+	/** "✔ RECETA DESBLOQUEADA", "? RECETA DESBLOQUEABLE" o "[candado] RECETA BLOQUEADA", centrado en cx. */
 	public void drawDetailStatus(PoseStack stack, Font font, int cx, int y) {
 		MutableComponent text = Component.translatable(detailKey).withStyle(format);
 		if (this == LOCKED) {
@@ -162,7 +170,7 @@ public enum RecipeLockState {
 	public static void renderTooltips(Screen screen, PoseStack stack, List<FilterButton> buttons, int mx, int my) {
 		for (FilterButton b : buttons) {
 			if (b.visible && b.isHoveredOrFocused() && b.isMouseOver(mx, my)) {
-				screen.renderTooltip(stack, b.tooltip(), mx, my);
+				screen.renderComponentTooltip(stack, b.tooltip(), mx, my);
 				return;
 			}
 		}
@@ -180,11 +188,15 @@ public enum RecipeLockState {
 			this.onChange = onChange;
 		}
 
-		Component tooltip() {
-			return Component.translatable(state.filterKey).withStyle(state.format)
+		List<Component> tooltip() {
+			List<Component> lines = new ArrayList<>();
+			lines.add(Component.translatable(state.filterKey).withStyle(state.format)
 					.append(Component.literal(": ").withStyle(ChatFormatting.GRAY))
 					.append(Component.translatable(state.isShown() ? "endereyesgui.filter.shown" : "endereyesgui.filter.hidden")
-							.withStyle(ChatFormatting.GRAY));
+							.withStyle(ChatFormatting.GRAY)));
+			Component hint = state.hintLine();
+			if (hint != null) lines.add(hint);
+			return lines;
 		}
 
 		@Override
@@ -220,7 +232,7 @@ public enum RecipeLockState {
 
 		@Override
 		public void updateNarration(@NotNull NarrationElementOutput output) {
-			output.add(NarratedElementType.TITLE, tooltip());
+			output.add(NarratedElementType.TITLE, tooltip().get(0));
 		}
 	}
 }

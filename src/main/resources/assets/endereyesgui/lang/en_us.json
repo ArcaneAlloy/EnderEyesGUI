@@ -157,6 +157,7 @@
   "endereyesgui.filter.locked": "Locked",
   "endereyesgui.filter.shown": "shown (click to hide)",
   "endereyesgui.filter.hidden": "hidden (click to show)",
+  "endereyesgui.state.unlockable_hint": "Get one of its ingredients in your inventory to unlock it",
   "endereyesgui.jei.evolutions": "Blacksmith Evolutions",
   "endereyesgui.jei.evolutions.click": "Left click: its evolution tree · Right click: what it upgrades into",
   "endereyesgui.jei.evolutions.quest_click": "Click the padlock to open the quest",

@@ -283,7 +283,10 @@ public class EvolutionCategory implements IRecipeCategory<EvolutionTree.Recipe> 
 				List<Component> lines = new ArrayList<>(hit.node().stack().getTooltipLines(mc.player,
 						mc.options.advancedItemTooltips ? TooltipFlag.Default.ADVANCED : TooltipFlag.Default.NORMAL));
 				RecipeLockState state = state(item);
-				if (state != null) lines.add(state.tooltipLine());
+				if (state != null) {
+					lines.add(state.tooltipLine());
+					if (state.hintLine() != null) lines.add(state.hintLine());
+				}
 				if (hit.node().repeated()) lines.add(Component.translatable("endereyesgui.jei.evolutions.repeated").withStyle(ChatFormatting.GRAY));
 				if (item != recipe.root()) lines.add(Component.translatable("endereyesgui.jei.evolutions.click").withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC));
 				return lines;

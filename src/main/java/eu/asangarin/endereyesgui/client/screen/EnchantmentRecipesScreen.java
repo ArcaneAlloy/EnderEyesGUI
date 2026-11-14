@@ -916,7 +916,7 @@ public class EnchantmentRecipesScreen extends Screen {
 		return book;
 	}
 
-	/** Encantamiento: bloqueado (candado) mientras falten Ender Eyes; si no, desbloqueable ya (X amarilla). */
+	/** Encantamiento: bloqueado (candado) mientras falten Ender Eyes; si no, desbloqueable (? amarilla). */
 	private RecipeLockState enchState(EnchantmentRecipeData d) {
 		return RecipeLockState.of(d.isUnlocked(), !d.isUnlocked() && eyesEarned < d.getNeedEyes());
 	}
