@@ -113,6 +113,7 @@
   "endereyesgui.enchantments.detail.eyes_obtained": "Ender Eyes obtained: %s",
   "endereyesgui.blacksmith.button.tooltip": "View Blacksmith recipes",
   "endereyesgui.blacksmith.title": "Blacksmith Recipes",
+  "endereyesgui.blacksmith.evolution_tree": "View its evolution tree",
   "endereyesgui.blacksmith.category.weapons": "Melee Weapons",
   "endereyesgui.blacksmith.category.armors": "Armors",
   "endereyesgui.blacksmith.category.tools": "Tools",

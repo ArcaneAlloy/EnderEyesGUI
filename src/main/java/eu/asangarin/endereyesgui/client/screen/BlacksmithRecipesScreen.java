@@ -66,6 +66,10 @@ public class BlacksmithRecipesScreen extends Screen {
 	private final PanelScroll detailScroll = new PanelScroll();
 	private ItemStack jeiHoveredItem = ItemStack.EMPTY;
 	private boolean hoveringResult = false;
+	/** Botón del árbol de evoluciones (a la derecha del nombre): ratón encima. */
+	private boolean hoveringTreeButton = false;
+	/** Icono provisional del botón del árbol. */
+	private static final ItemStack TREE_ICON = new ItemStack(net.minecraft.world.item.Items.OAK_SAPLING);
 
 	public BlacksmithRecipesScreen(List<BlacksmithRecipeData> recipes) {
 		super(Component.empty());
@@ -143,6 +147,7 @@ public class BlacksmithRecipesScreen extends Screen {
 		hoveredIngredient = null;
 		jeiHoveredItem = ItemStack.EMPTY;
 		hoveringResult = false;
+		hoveringTreeButton = false;
 
 		drawCenteredString(stack, font,
 				Component.translatable("endereyesgui.blacksmith.title"), width / 2, 6, 0xFFFFFF);
@@ -164,7 +169,7 @@ public class BlacksmithRecipesScreen extends Screen {
 		recipeList.render(stack, mx, my, delta);
 		renderDetailPanel(stack, mx, my);
 		// Lo que queda recortado fuera del panel no muestra tooltip
-		if (detailScroll.finish(stack) && !detailScroll.contains(mx, my)) { hoveredIngredient = null; hoveringResult = false; jeiHoveredItem = ItemStack.EMPTY; }
+		if (detailScroll.finish(stack) && !detailScroll.contains(mx, my)) { hoveredIngredient = null; hoveringResult = false; hoveringTreeButton = false; jeiHoveredItem = ItemStack.EMPTY; }
 
 		super.render(stack, mx, my, delta);
 		RecipeLockState.renderTooltips(this, stack, filterButtons, mx, my);
@@ -174,6 +179,8 @@ public class BlacksmithRecipesScreen extends Screen {
 			renderTooltip(stack, hoveredIngredient, hoveredIngX, hoveredIngY);
 		} else if (hoveringResult && selected != null) {
 			renderTooltip(stack, selected.getResult(), mx, my);
+		} else if (hoveringTreeButton) {
+			renderTooltip(stack, Component.translatable("endereyesgui.blacksmith.evolution_tree"), mx, my);
 		}
 	}
 
@@ -217,6 +224,20 @@ public class BlacksmithRecipesScreen extends Screen {
 		if (hoveringResult) jeiHoveredItem = selected.getResult();
 		int nameX = px + PAD + 16 + 4;
 		int nameW = pw - PAD - 16 - 4 - PAD;
+		// Botón del árbol de evoluciones en JEI, a la derecha del nombre (solo si el objeto forma parte de alguna mejora)
+		if (JeiCompat.hasEvolutionTree(selected.getResult())) {
+			String name = font.plainSubstrByWidth(selected.getResult().getHoverName().getString(), nameW - 18 - 6);
+			int bx = nameX + font.width(name) + 6, by = ty - 1;
+			hoveringTreeButton = mx >= bx && mx < bx + 18 && my >= by && my < by + 18;
+			fill(stack, bx, by, bx + 18, by + 18, hoveringTreeButton ? C_TAB_ACTIVE : C_TAB_IDLE);
+			int border = hoveringTreeButton ? 0xFFDD88FF : C_TAB_BORD;
+			fill(stack, bx, by, bx + 18, by + 1, border);
+			fill(stack, bx, by + 17, bx + 18, by + 18, border);
+			fill(stack, bx, by, bx + 1, by + 18, border);
+			fill(stack, bx + 17, by, bx + 18, by + 18, border);
+			minecraft.getItemRenderer().renderAndDecorateFakeItem(TREE_ICON, bx + 1, by + 1);
+			nameW -= 18 + 6;
+		}
 		font.draw(stack, font.plainSubstrByWidth(selected.getResult().getHoverName().getString(), nameW),
 				nameX, ty + (16 - font.lineHeight) / 2, 0xDD00FF);
 		ty += 16 + 6;
@@ -419,6 +440,13 @@ public class BlacksmithRecipesScreen extends Screen {
 	@Override
 	public boolean mouseClicked(double mx, double my, int btn) {
 		if (btn == 0 && detailScroll.contains(mx, my) && QuestLockInfo.click(mx, my, this)) return true;
+		// Botón del árbol de evoluciones: abre JEI en el árbol del objeto
+		if (btn == 0 && hoveringTreeButton && selected != null) {
+			minecraft.getSoundManager().play(net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(
+					net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK, 1.0F));
+			JeiCompat.showEvolutionTree(selected.getResult());
+			return true;
+		}
 		return super.mouseClicked(mx, my, btn);
 	}
 

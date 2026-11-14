@@ -32,6 +32,9 @@ public class JeiCompat implements IModPlugin {
 
     /** Árbol de evoluciones del Blacksmith; se construye con las recetas del cliente al cargar JEI. */
     @Nullable private static EvolutionTree evolutionTree = null;
+    @Nullable private static EvolutionCategory evolutionCategory = null;
+    /** Árbol de cada objeto, para abrirlo directamente desde la GUI del Blacksmith. */
+    private static final java.util.Map<net.minecraft.world.item.Item, EvolutionTree.Recipe> EVOLUTION_TREES = new java.util.HashMap<>();
 
     @Override
     public ResourceLocation getPluginUid() { return PLUGIN_ID; }
@@ -39,14 +42,17 @@ public class JeiCompat implements IModPlugin {
     @Override
     public void registerCategories(IRecipeCategoryRegistration registration) {
         evolutionTree = null;
+        evolutionCategory = null;
+        EVOLUTION_TREES.clear();
         try {
             var level = Minecraft.getInstance().level;
             if (level == null) return;
             evolutionTree = EvolutionTree.build(level.getRecipeManager());
-            registration.addRecipeCategories(new EvolutionCategory(
-                    registration.getJeiHelpers().getGuiHelper(), evolutionTree));
+            evolutionCategory = new EvolutionCategory(registration.getJeiHelpers().getGuiHelper(), evolutionTree);
+            registration.addRecipeCategories(evolutionCategory);
         } catch (Throwable t) {
             evolutionTree = null;
+            evolutionCategory = null;
             LOGGER.warn("[JEI] Blacksmith evolutions not available: {}", t.toString());
         }
     }
@@ -55,6 +61,7 @@ public class JeiCompat implements IModPlugin {
     public void registerRecipes(IRecipeRegistration registration) {
         if (evolutionTree == null) return;
         var trees = evolutionTree.recipes();
+        for (EvolutionTree.Recipe tree : trees) EVOLUTION_TREES.put(tree.root(), tree);
         registration.addRecipes(EvolutionCategory.TYPE, trees);
         LOGGER.info("[JEI] Blacksmith evolutions: {} trees", trees.size());
     }
@@ -130,6 +137,36 @@ public class JeiCompat implements IModPlugin {
             jeiRuntime.getRecipesGui().show(focus);
         } catch (Exception e) {
             LOGGER.warn("[JEI] showUsages error: {}", e.toString());
+        }
+    }
+
+    // ── Árbol de evoluciones desde la GUI del Blacksmith ──────────────────────
+
+    /** ¿Tiene el objeto árbol de evoluciones (forma parte de alguna mejora del Blacksmith)? */
+    public static boolean hasEvolutionTree(ItemStack stack) {
+        return isAvailable() && !stack.isEmpty() && EVOLUTION_TREES.containsKey(stack.getItem());
+    }
+
+    /**
+     * Abre JEI directamente en el árbol del objeto. IRecipesGui.showRecipes no está en todas las versiones de JEI 11,
+     * así que se busca por reflexión; si no está, se abre JEI con el objeto (el árbol sale entre sus pestañas).
+     */
+    public static void showEvolutionTree(ItemStack stack) {
+        if (!hasEvolutionTree(stack)) return;
+        EvolutionTree.Recipe tree = EVOLUTION_TREES.get(stack.getItem());
+        try {
+            var focus = jeiRuntime.getJeiHelpers().getFocusFactory()
+                    .createFocus(RecipeIngredientRole.OUTPUT, VanillaTypes.ITEM_STACK, stack);
+            var gui = jeiRuntime.getRecipesGui();
+            try {
+                java.lang.reflect.Method showRecipes = mezz.jei.api.runtime.IRecipesGui.class.getMethod("showRecipes",
+                        mezz.jei.api.recipe.category.IRecipeCategory.class, java.util.List.class, java.util.List.class);
+                showRecipes.invoke(gui, evolutionCategory, java.util.List.of(tree), java.util.List.of(focus));
+            } catch (NoSuchMethodException e) {
+                gui.show(focus);
+            }
+        } catch (Exception e) {
+            LOGGER.warn("[JEI] showEvolutionTree error: {}", e.toString());
         }
     }
 }

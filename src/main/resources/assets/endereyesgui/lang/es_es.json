@@ -113,6 +113,7 @@
   "endereyesgui.enchantments.detail.eyes_obtained": "Ojos de Ender obtenidos: %s",
   "endereyesgui.blacksmith.button.tooltip": "Ver recetas de la Herrería",
   "endereyesgui.blacksmith.title": "Recetas de la Herrería",
+  "endereyesgui.blacksmith.evolution_tree": "Ver su árbol de evoluciones",
   "endereyesgui.blacksmith.category.weapons": "Armas cuerpo a cuerpo",
   "endereyesgui.blacksmith.category.armors": "Armaduras",
   "endereyesgui.blacksmith.category.tools": "Herramientas",
